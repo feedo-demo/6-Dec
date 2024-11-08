@@ -7,7 +7,7 @@ import { auth, db } from '../firebase/config';
 import { onAuthStateChanged, updateProfile as updateFirebaseProfile, updatePassword, sendPasswordResetEmail } from 'firebase/auth';
 import { doc, getDoc, query, collection, where, getDocs, setDoc, updateDoc, deleteDoc } from 'firebase/firestore';
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword, signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
-import { createCustomUserId } from '../backend for user/constants/profileData';
+import { createCustomUserId } from '../backend/constants/profileData';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 
 const AuthContext = createContext();

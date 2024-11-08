@@ -6,21 +6,21 @@ import './firebase/config';
 import { AuthProvider, useAuth } from './auth/AuthContext';
 
 // Import components after context
-import Layout from './backend for user/components/Layout/Layout';
-import Dashboard from './backend for user/pages/Dashboard/Dashboard';
-import MyApplications from './backend for user/pages/MyApplications/MyApplications';
-import NewOpportunities from './backend for user/pages/NewOpportunities/NewOpportunities';
-import DataManagement from './backend for user/pages/DataManagement/DataManagement';
-import Subscription from './backend for user/pages/Subscription/Subscription';
+import Layout from './backend/components/Layout/Layout';
+import Dashboard from './backend/pages/Dashboard/Dashboard';
+import MyApplications from './backend/pages/MyApplications/MyApplications';
+import NewOpportunities from './backend/pages/NewOpportunities/NewOpportunities';
+import DataManagement from './backend/pages/DataManagement/DataManagement';
+import Subscription from './backend/pages/Subscription/Subscription';
 import Signup from './frontend/pages/Signup/Signup';
 import Login from './frontend/pages/Login/Login';
-import Settings from './backend for user/pages/Settings/Settings';
-import HelpCenter from './backend for user/pages/HelpCenter/HelpCenter';
+import Settings from './backend/pages/Settings/Settings';
+import HelpCenter from './backend/pages/HelpCenter/HelpCenter';
 import ProfileType from './frontend/pages/ProfileType/ProfileType';
 
 // Import styles last
 import './App.css';
-import './backend for user/components/Header/DashboardHeader.css';
+import './backend/components/Header/DashboardHeader.css';
 
 // Move ProtectedRoute component definition here
 const ProtectedRoute = ({ children }) => {
