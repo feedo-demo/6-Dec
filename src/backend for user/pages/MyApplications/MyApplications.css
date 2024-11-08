@@ -1,0 +1,658 @@
+/**
+ * MyApplications Component Styles
+ * 
+ * A comprehensive stylesheet for the MyApplications component featuring:
+ * 
+ * 1. Layout & Structure
+ *    - Responsive grid system
+ *    - Flexible containers
+ *    - Proper spacing and alignment
+ * 
+ * 2. Interactive Elements
+ *    - Buttons and inputs
+ *    - Hover and active states
+ *    - Focus indicators
+ * 
+ * 3. Animations & Transitions
+ *    - Smooth state changes
+ *    - Loading effects
+ *    - Micro-interactions
+ * 
+ * 4. Status Indicators
+ *    - Color-coded badges
+ *    - Visual feedback
+ *    - State representations
+ * 
+ * 5. Responsive Design
+ *    - Mobile-first approach
+ *    - Breakpoint adjustments
+ *    - Flexible layouts
+ * 
+ * 6. Accessibility
+ *    - High contrast options
+ *    - Focus management
+ *    - Screen reader support
+ */
+
+/* Main Container Styles
+-------------------------------------------------- */
+/* Primary container with responsive padding and background */
+.my-applications {
+  @apply p-6 bg-gray-50 min-h-screen;
+}
+
+/* Header Section
+-------------------------------------------------- */
+/* Container for top-level actions and title */
+.applications-header {
+  @apply mb-12 flex justify-end pt-8;
+}
+
+.page-title {
+  @apply text-2xl font-bold text-gray-800;
+}
+
+.header-actions {
+  @apply flex flex-col md:flex-row gap-4 items-stretch md:items-center;
+}
+
+/* Search and Filter Section */
+.search-filter-section {
+  @apply mb-6 w-full;
+}
+
+/* Search Bar */
+.search-bar {
+  @apply w-64; /* Slightly smaller width for better alignment */
+}
+
+.search-input {
+  @apply w-full px-4 py-2 rounded-lg border border-gray-200 
+         focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
+         transition-all duration-300;
+}
+
+/* Filter Button */
+.filter-btn {
+  @apply flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-lg
+         hover:bg-gray-50 transition-all duration-300 whitespace-nowrap;
+}
+
+/* Status Filter */
+.status-filter {
+  @apply px-4 py-2 bg-white border border-gray-200 rounded-lg
+         focus:outline-none focus:ring-2 focus:ring-blue-500
+         transition-all duration-300 w-36; /* Fixed width for consistency */
+}
+
+/* Table Styles
+-------------------------------------------------- */
+/**
+ * Enhanced table layout with features:
+ * - Sticky header
+ * - Hover effects
+ * - Row animations
+ * - Responsive design
+ */
+.applications-table {
+  @apply bg-white rounded-lg shadow-sm overflow-hidden;
+  animation: slideInFromBottom 0.5s ease-out forwards;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s ease;
+}
+
+.applications-table:hover {
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+}
+
+table {
+  @apply w-full border-collapse;
+}
+
+/* Table Header */
+thead {
+  @apply bg-gray-50;
+  animation: fadeIn 0.5s ease-out forwards;
+}
+
+th {
+  @apply px-6 py-4 text-left text-sm font-semibold text-gray-600 border-b border-gray-200
+         transition-all duration-300;
+}
+
+/* Table Row Effects */
+tbody tr {
+  @apply border-b border-gray-100 transition-all duration-200;
+  animation: fadeIn 0.5s ease-out forwards;
+}
+
+tbody tr:hover {
+  @apply bg-gray-50;
+  transform: translateX(4px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+td {
+  @apply px-6 py-4 text-sm text-gray-700;
+  transition: all 0.2s ease;
+}
+
+/* Staggered Animation for Rows */
+tbody tr:nth-child(1) { animation-delay: 0.1s; }
+tbody tr:nth-child(2) { animation-delay: 0.15s; }
+tbody tr:nth-child(3) { animation-delay: 0.2s; }
+tbody tr:nth-child(4) { animation-delay: 0.25s; }
+tbody tr:nth-child(5) { animation-delay: 0.3s; }
+tbody tr:nth-child(6) { animation-delay: 0.35s; }
+tbody tr:nth-child(7) { animation-delay: 0.4s; }
+tbody tr:nth-child(8) { animation-delay: 0.45s; }
+tbody tr:nth-child(9) { animation-delay: 0.5s; }
+tbody tr:nth-child(10) { animation-delay: 0.55s; }
+
+/* Enhanced Action Buttons */
+.action-buttons {
+  @apply flex items-center gap-2 opacity-80;
+  transition: all 0.2s ease;
+}
+
+tr:hover .action-buttons {
+  @apply opacity-100;
+}
+
+.action-btn {
+  @apply p-1.5 rounded-lg transition-all duration-300 transform;
+}
+
+.action-btn:hover {
+  @apply scale-110;
+}
+
+.action-btn.view {
+  @apply text-blue-600 hover:bg-blue-50;
+}
+
+.action-btn.view:hover {
+  @apply text-blue-700;
+  box-shadow: 0 0 12px rgba(37, 99, 235, 0.2);
+}
+
+.action-btn.edit {
+  @apply text-green-600 hover:bg-green-50;
+}
+
+.action-btn.edit:hover {
+  @apply text-green-700;
+  box-shadow: 0 0 12px rgba(22, 163, 74, 0.2);
+}
+
+.action-btn.delete {
+  @apply text-red-600 hover:bg-red-50;
+}
+
+.action-btn.delete:hover {
+  @apply text-red-700;
+  box-shadow: 0 0 12px rgba(220, 38, 38, 0.2);
+}
+
+/* Status Badge Enhancement */
+.status-badge {
+  @apply px-3 py-1 rounded-full text-xs font-medium transition-all duration-300;
+}
+
+tr:hover .status-badge {
+  transform: scale(1.05);
+}
+
+/* Deadline Cell Enhancement */
+.deadline-cell {
+  @apply flex items-center gap-2 text-gray-600 transition-all duration-300;
+}
+
+tr:hover .deadline-cell {
+  @apply text-gray-800;
+}
+
+.deadline-icon {
+  @apply w-4 h-4 text-gray-400 transition-all duration-300;
+}
+
+tr:hover .deadline-icon {
+  @apply text-gray-600 rotate-12;
+}
+
+/* Empty State Animation */
+.applications-table:empty {
+  @apply flex items-center justify-center h-48;
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+/* Loading State */
+.applications-table.loading {
+  @apply relative;
+  min-height: 200px;
+}
+
+.applications-table.loading::after {
+  content: '';
+  @apply absolute inset-0 bg-gray-50/50 backdrop-blur-sm;
+  animation: shimmer 1.5s infinite;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -1000px 0;
+  }
+  100% {
+    background-position: 1000px 0;
+  }
+}
+
+/* Status Badge */
+.status-badge {
+  @apply px-3 py-1 rounded-full text-xs font-medium;
+}
+
+.status-badge.pending {
+  @apply bg-yellow-100 text-yellow-800;
+}
+
+.status-badge.approved {
+  @apply bg-green-100 text-green-800;
+}
+
+.status-badge.rejected {
+  @apply bg-red-100 text-red-800;
+}
+
+.status-badge.follow-up {
+  @apply bg-blue-100 text-blue-800;
+}
+
+.status-badge.incomplete {
+  @apply bg-orange-100 text-orange-800;
+}
+
+/* Deadline Cell */
+.deadline-cell {
+  @apply flex items-center gap-2 text-gray-600;
+}
+
+.deadline-icon {
+  @apply w-4 h-4 text-gray-400;
+}
+
+/* Action Buttons */
+.action-buttons {
+  @apply flex items-center gap-2;
+}
+
+.action-btn {
+  @apply p-1.5 rounded-lg transition-all duration-300;
+}
+
+.action-btn.view {
+  @apply text-blue-600 hover:bg-blue-50;
+}
+
+.action-btn.edit {
+  @apply text-green-600 hover:bg-green-50;
+}
+
+.action-btn.delete {
+  @apply text-red-600 hover:bg-red-50;
+}
+
+/* Pagination */
+.pagination {
+  @apply mt-6 flex items-center justify-end gap-4;
+}
+
+.pagination-btn {
+  @apply px-6 py-2 text-sm text-gray-600 bg-white border border-gray-200 rounded-lg
+         hover:bg-gray-50 transition-all duration-300;
+}
+
+.pagination-btn:disabled {
+  @apply opacity-50 cursor-not-allowed hover:bg-white;
+}
+
+/* Responsive Design
+-------------------------------------------------- */
+/**
+ * Breakpoint-specific styles:
+ * - Mobile optimization
+ * - Tablet layouts
+ * - Desktop enhancements
+ */
+@media (max-width: 768px) {
+  .applications-table {
+    @apply overflow-x-auto;
+  }
+  
+  .header-actions {
+    @apply w-full;
+  }
+}
+
+@media (max-width: 640px) {
+  .status-boxes {
+    @apply grid-cols-1;
+  }
+}
+
+/* Animations
+-------------------------------------------------- */
+/**
+ * Custom animations for various elements:
+ * - Fade effects
+ * - Slide transitions
+ * - Pulse animations
+ * - Rotation effects
+ */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.my-applications {
+  animation: fadeIn 0.5s ease-out;
+}
+
+/* Create Application Button */
+.create-application-btn {
+  @apply px-6 py-2 bg-[#246BFD] text-white rounded-full
+         text-sm font-medium relative overflow-hidden
+         hover:bg-blue-600 transition-all duration-300
+         flex items-center gap-2;
+  box-shadow: 0 2px 10px rgba(36, 107, 253, 0.2);
+}
+
+.create-application-btn::before {
+  content: '';
+  @apply absolute inset-0 bg-white/20;
+  transform: translateX(-100%) skewX(-15deg);
+  transition: transform 0.6s;
+}
+
+.create-application-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(36, 107, 253, 0.3);
+}
+
+.create-application-btn:hover::before {
+  transform: translateX(100%) skewX(-15deg);
+}
+
+.create-application-btn:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 8px rgba(36, 107, 253, 0.2);
+}
+
+/* Add a subtle pulse animation */
+@keyframes buttonPulse {
+  0% { box-shadow: 0 2px 10px rgba(36, 107, 253, 0.2); }
+  50% { box-shadow: 0 2px 15px rgba(36, 107, 253, 0.4); }
+  100% { box-shadow: 0 2px 10px rgba(36, 107, 253, 0.2); }
+}
+
+.create-application-btn {
+  animation: buttonPulse 2s infinite;
+}
+
+/* Status Boxes Section
+-------------------------------------------------- */
+/**
+ * Grid layout for status summary boxes
+ * Features:
+ * - Responsive grid columns
+ * - Gap spacing
+ * - Animation support
+ */
+.status-boxes {
+  @apply grid grid-cols-6 gap-4 mb-8;
+  animation: fadeInUp 0.6s ease-out forwards;
+}
+
+.status-box {
+  @apply flex items-center p-4 rounded-lg text-white transition-all duration-300
+         hover:transform hover:-translate-y-1 cursor-pointer
+         relative overflow-hidden;
+  animation: slideInFromBottom 0.5s ease-out forwards;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.status-box:hover {
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+  transform: translateY(-4px) scale(1.02);
+}
+
+/* Status Box Animations */
+@keyframes slideInFromBottom {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes countUp {
+  from {
+    transform: translateY(10px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* Animate each status box with delay */
+.status-box:nth-child(1) { animation-delay: 0.1s; }
+.status-box:nth-child(2) { animation-delay: 0.2s; }
+.status-box:nth-child(3) { animation-delay: 0.3s; }
+.status-box:nth-child(4) { animation-delay: 0.4s; }
+.status-box:nth-child(5) { animation-delay: 0.5s; }
+.status-box:nth-child(6) { animation-delay: 0.6s; }
+
+/* Enhanced Status Icon */
+.status-icon {
+  @apply flex items-center justify-center w-12 h-12 mr-3 bg-white/20 rounded-full;
+  animation: rotateIn 0.6s ease-out forwards;
+  backdrop-filter: blur(4px);
+}
+
+@keyframes rotateIn {
+  from {
+    opacity: 0;
+    transform: rotate(-180deg) scale(0.3);
+  }
+  to {
+    opacity: 1;
+    transform: rotate(0) scale(1);
+  }
+}
+
+.status-icon svg {
+  @apply text-white;
+  animation: bounceIn 0.6s ease-out forwards;
+}
+
+@keyframes bounceIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.3);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+  70% {
+    transform: scale(0.9);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Enhanced Status Content */
+.status-content {
+  @apply flex flex-col;
+  animation: fadeIn 0.6s ease-out forwards;
+}
+
+.status-label {
+  @apply text-sm font-medium text-white/90;
+  animation: slideInFromRight 0.5s ease-out forwards;
+}
+
+.status-value {
+  @apply text-3xl font-bold;
+  animation: countUp 0.8s ease-out forwards;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Ripple effect on click */
+.status-box::after {
+  content: '';
+  @apply absolute inset-0 rounded-lg;
+  background: radial-gradient(circle, rgba(255,255,255,0.7) 0%, rgba(255,255,255,0) 100%);
+  transform: scale(0);
+  opacity: 0;
+  transition: transform 0.6s, opacity 0.6s;
+}
+
+.status-box:active::after {
+  transform: scale(2);
+  opacity: 0;
+}
+
+/* Glow effect on hover */
+.status-box::before {
+  content: '';
+  @apply absolute inset-0 rounded-lg;
+  background: radial-gradient(circle at center, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0) 70%);
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.status-box:hover::before {
+  opacity: 1;
+}
+
+/* Active state enhancement */
+.status-box.active {
+  transform: scale(1.02);
+  box-shadow: 0 8px 15px rgba(0, 0, 0, 0.2);
+  position: relative;
+}
+
+.status-box.active::after {
+  content: '';
+  @apply absolute bottom-0 left-0 w-full h-2 bg-white;
+  border-bottom-left-radius: 8px;
+  border-bottom-right-radius: 8px;
+}
+
+.status-box.active::before {
+  content: none;
+}
+
+/* Add a subtle pulse animation for the active state */
+@keyframes subtlePulse {
+  0% { box-shadow: 0 8px 15px rgba(0, 0, 0, 0.2); }
+  50% { box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3); }
+  100% { box-shadow: 0 8px 15px rgba(0, 0, 0, 0.2); }
+}
+
+.status-box.active {
+  animation: subtlePulse 2s infinite;
+}
+
+/* Responsive adjustments */
+@media (max-width: 1280px) {
+  .status-boxes {
+    @apply grid-cols-3;
+  }
+}
+
+@media (max-width: 768px) {
+  .status-boxes {
+    @apply grid-cols-2;
+  }
+}
+
+@media (max-width: 640px) {
+  .status-boxes {
+    @apply grid-cols-1;
+  }
+}
+/* Active state for status boxes */
+.status-box.active::after {
+  content: '';
+  @apply absolute bottom-0 left-0 w-full h-1 bg-white/40;
+}
+
+.status-box:focus {
+  @apply outline-none ring-2 ring-white/50;
+}
+
+/* Add hover effect to show clickability */
+.status-box:hover::before {
+  content: '';
+  @apply absolute inset-0 bg-white/10;
+}
+
+/* Status Boxes Colors */
+.status-box.total {
+  @apply bg-[#00BCD4];
+}
+
+.status-box.pending {
+  @apply bg-[#607D8B];
+}
+
+.status-box.incomplete {
+  @apply bg-[#FFC107];
+}
+
+.status-box.follow-up {
+  @apply bg-[#3F51B5];
+}
+
+.status-box.approved {
+  @apply bg-[#4CAF50];
+}
+
+.status-box.rejected {
+  @apply bg-[#F44336];
+}
+

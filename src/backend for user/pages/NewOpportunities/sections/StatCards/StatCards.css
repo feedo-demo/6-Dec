@@ -1,0 +1,110 @@
+/* StatCards.css
+ * Purpose: Styles for the opportunity statistics cards component
+ * Features:
+ * - Responsive grid layout with Tailwind classes
+ * - Smooth hover animations and transitions
+ * - Custom gradient backgrounds for different card types
+ * - Consistent typography and spacing
+ * - Support for both opportunities and dashboard layouts
+ */
+
+/* Main grid container for opportunities statistics
+ * - Uses 4-column grid on desktop
+ * - Responsive gap spacing
+ * - Bottom margin for separation from other content
+ */
+.opportunities-stats-overview {
+  @apply grid grid-cols-4 gap-4 mb-8;
+}
+
+/* Individual stat card styling
+ * - 3D transform style for depth effect
+ * - Consistent padding and border radius
+ * - White text for contrast against gradients
+ * - Smooth transition for hover effects
+ */
+.opportunity-stat-card {
+  @apply p-6 rounded-2xl text-white transition-all duration-300;
+  transform-style: preserve-3d;
+}
+
+/* Hover effect for stat cards
+ * - Slight upward movement for interactive feel
+ * - Subtle shadow for depth perception
+ * - Smooth transition from default state
+ */
+.opportunity-stat-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+}
+
+/* Gradient background variations for different card types
+ * Each gradient uses complementary colors for visual appeal
+ * and maintains sufficient contrast for text readability
+ */
+.opportunity-stat-card.total {
+  background: linear-gradient(135deg, #00BCD4, #0097A7); /* Cyan to darker cyan */
+}
+
+.opportunity-stat-card.new {
+  background: linear-gradient(135deg, #607D8B, #455A64); /* Blue grey gradient */
+}
+
+.opportunity-stat-card.matched {
+  background: linear-gradient(135deg, #4CAF50, #388E3C); /* Green gradient */
+}
+
+.opportunity-stat-card.closing {
+  background: linear-gradient(135deg, #FF5722, #E64A19); /* Orange gradient */
+}
+
+/* Icon styling within cards
+ * - Consistent sizing and spacing
+ * - Slight transparency for visual hierarchy
+ */
+.opportunity-stat-icon {
+  @apply mb-4 text-3xl opacity-80;
+}
+
+/* Ensure icons maintain white color against gradients */
+.opportunity-stat-icon svg {
+  @apply text-white;
+}
+
+/* Card title styling
+ * - Smaller font size for hierarchy
+ * - Semi-transparent for visual hierarchy
+ * - Consistent bottom margin
+ */
+.opportunity-stat-content h3 {
+  @apply text-sm font-medium text-white opacity-80 mb-2;
+}
+
+/* Primary statistic value styling
+ * - Large, bold text for emphasis
+ * - Full opacity for maximum visibility
+ */
+.opportunity-stat-value {
+  @apply text-4xl font-bold text-white;
+}
+
+/* Subtitle/supporting text styling
+ * - Smaller size for hierarchy
+ * - Reduced opacity for secondary information
+ * - Consistent top margin
+ */
+.opportunity-stat-subtitle {
+  @apply text-sm text-white opacity-70 mt-1;
+}
+
+/* Alternative layout for dashboard view
+ * - 3-column grid instead of 4
+ * - Larger gaps between cards
+ */
+.dashboard-stats-overview {
+  @apply grid grid-cols-3 gap-6 mb-8;
+}
+
+/* Placeholder for dashboard-specific styles
+ * Can be expanded based on dashboard requirements
+ */ 

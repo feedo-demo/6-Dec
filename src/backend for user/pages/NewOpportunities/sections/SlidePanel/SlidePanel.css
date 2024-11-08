@@ -1,0 +1,65 @@
+/* SlidePanel.css
+ * Purpose: Styles for the sliding panel component
+ * Features:
+ * - Animated slide-in transition
+ * - Blurred backdrop overlay
+ * - Responsive sizing
+ * - Smooth animations
+ */
+
+/* Overlay backdrop
+ * - Fixed positioning to cover entire viewport
+ * - Semi-transparent black background
+ * - Blur effect for depth
+ * - High z-index to appear above other content
+ */
+.slide-panel-overlay {
+  @apply fixed inset-0 bg-black bg-opacity-50 z-50
+         flex justify-end transition-all duration-300;
+  backdrop-filter: blur(4px);
+}
+
+/* Panel wrapper
+ * - Full height with maximum width constraint
+ * - Light background for contrast
+ * - Smooth transform transition
+ * - Custom slide-in animation
+ */
+.slide-panel-wrapper {
+  @apply bg-gray-50 w-full max-w-3xl h-full relative
+         transform transition-transform duration-300 ease-out;
+  animation: slideIn 0.3s ease-out forwards;
+}
+
+/* Content container
+ * - Full height utilization
+ * - Vertical scrolling for overflow content
+ */
+.slide-panel-content {
+  @apply h-full overflow-y-auto;
+}
+
+/* Close button styling
+ * - Fixed positioning in top-right corner
+ * - Circular background with hover effect
+ * - Smooth color transitions
+ * - Elevated z-index to stay above content
+ */
+.slide-panel-close-btn {
+  @apply absolute top-4 right-4 p-2 rounded-full bg-white
+         text-gray-600 hover:text-gray-900 transition-all duration-300
+         hover:bg-gray-100 z-10;
+}
+
+/* Slide-in animation keyframes
+ * - Starts from fully off-screen (100% translated)
+ * - Smoothly slides to natural position (0 translation)
+ */
+@keyframes slideIn {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+} 

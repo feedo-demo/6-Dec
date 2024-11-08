@@ -1,0 +1,122 @@
+/**
+ * RecentActivity Component Styles
+ * 
+ * Comprehensive styles for the recent activity interface that provides:
+ * - Activity list with status-based styling
+ * - Interactive hover states
+ * - Staggered animations
+ * - Responsive design
+ * - Loading states
+ * 
+ * Features:
+ * - Status-based colors
+ * - Hover animations
+ * - Entrance effects
+ * - Mobile responsiveness
+ * - Loading indicators
+ */
+
+/* Main Container */
+.recent-activity {
+  @apply w-full max-w-[calc(100%-288px)] bg-white rounded-2xl mt-6 mb-6 p-6 border border-gray-200;
+  animation: fadeIn 0.6s ease-out;  /* Entrance animation */
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);  /* Subtle shadow */
+}
+
+/* Activity Header */
+.activity-header {
+  @apply mb-3;  /* Bottom margin for spacing */
+}
+
+/* Activity Title */
+.activity-title {
+  @apply text-xl font-semibold text-gray-800;  /* Title styling */
+}
+
+/* Activity List Container */
+.activity-list {
+  @apply space-y-2;  /* Vertical spacing between items */
+}
+
+/* Individual Activity Item */
+.activity-item {
+  @apply flex items-center gap-3 py-2 px-3 rounded-xl transition-all duration-300;
+  animation: slideInFromRight 0.5s ease-out forwards;  /* Entrance animation */
+  opacity: 0;  /* Initially hidden for animation */
+}
+
+/* Activity Item Hover Effect */
+.activity-item:hover {
+  @apply bg-gray-50 transform translate-x-2;  /* Hover state with movement */
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);  /* Hover shadow */
+}
+
+/* Activity Icon Container */
+.activity-icon-wrapper {
+  @apply p-2.5 rounded-full transition-all duration-300;  /* Icon background */
+}
+
+/* Activity Icon */
+.activity-icon {
+  @apply w-4 h-4;  /* Icon size */
+}
+
+/* Activity Content Container */
+.activity-content {
+  @apply flex-1 flex items-center justify-between gap-2;  /* Content layout */
+}
+
+/* Activity Main Text */
+.activity-main {
+  @apply flex gap-2 text-sm;  /* Text layout */
+}
+
+/* Activity Type Label */
+.activity-type {
+  @apply font-medium text-gray-900;  /* Type text styling */
+}
+
+/* Activity Description */
+.activity-description {
+  @apply text-gray-600;  /* Description text styling */
+}
+
+/* Activity Date */
+.activity-date {
+  @apply text-sm text-gray-400;  /* Date text styling */
+}
+
+/* View All Button */
+.view-all-btn {
+  @apply px-3 py-1.5 rounded-lg text-blue-600 text-sm font-medium 
+         transition-all duration-300 hover:bg-blue-50;  /* Button styling */
+}
+
+/* View All Button Hover Effect */
+.view-all-btn:hover {
+  @apply bg-blue-100 transform scale-105;  /* Enhanced hover state */
+}
+
+/* Entrance Animation */
+@keyframes slideInFromRight {
+  0% {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Fade In Animation */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+} 

@@ -1,0 +1,38 @@
+{
+  /* TypeScript Compiler Configuration
+   * This file controls how TypeScript compiles your code and what features are available.
+   * It's configured for a React + TypeScript project using modern JavaScript features.
+   */
+  "compilerOptions": {
+    /* JavaScript Language Level Configuration */
+    "target": "es5",                    /* Compile down to ES5 for wider browser support */
+    "lib": [
+      "dom",                            /* Include DOM type definitions */
+      "dom.iterable",                   /* Include DOM iteration methods */
+      "esnext"                          /* Include latest ECMAScript features */
+    ],
+
+    /* JavaScript Support & Interop */
+    "allowJs": true,                    /* Allow JavaScript files to be compiled */
+    "skipLibCheck": true,               /* Skip type checking of declaration files for better performance */
+    "esModuleInterop": true,            /* Enable CommonJS/ES module interoperability */
+    "allowSyntheticDefaultImports": true, /* Allow default imports from modules without default export */
+
+    /* Type Checking Rules */
+    "strict": true,                     /* Enable all strict type checking options */
+    "forceConsistentCasingInFileNames": true, /* Ensure consistent casing in file names */
+    "noFallthroughCasesInSwitch": true, /* Report errors for fallthrough cases in switch statements */
+
+    /* Module Resolution */
+    "module": "esnext",                 /* Use ES modules for code generation */
+    "moduleResolution": "node",         /* Use Node.js style module resolution */
+    "resolveJsonModule": true,          /* Enable importing JSON files */
+    "isolatedModules": true,            /* Ensure each file can be safely transpiled */
+    "noEmit": true,                     /* Do not emit output (CRA handles this) */
+    "jsx": "react-jsx"                  /* Support JSX for React */
+  },
+  /* File Inclusion */
+  "include": [
+    "src"                               /* Include all files in the src directory */
+  ]
+} 

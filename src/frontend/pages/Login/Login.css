@@ -1,0 +1,628 @@
+/*******************************************************************************
+ * Login Page Stylesheet
+ * 
+ * This stylesheet contains all styles for the login/signup page of the Feedo application.
+ * The page features a split layout with:
+ * - Left side: Hero section with logo, illustration and award badges
+ * - Right side: Authentication form with toggle between login/signup
+ *
+ * Key Features:
+ * - Responsive design that adapts to mobile devices
+ * - Interactive form elements with hover/focus states
+ * - Smooth animations and transitions
+ * - Custom styled form controls (inputs, buttons, checkboxes)
+ * - Loading states and error handling styles
+ * - Google Sign-In integration styles
+ * 
+ * Organization:
+ * 1. Layout & Container Styles
+ * 2. Left Side Styles (Hero Section)
+ * 3. Right Side Styles (Auth Form)
+ * 4. Form Elements & Controls
+ * 5. Button Styles
+ * 6. Loading States
+ * 7. Error Handling
+ * 8. Responsive Design
+ * 9. Animations
+ * 
+ * Dependencies:
+ * - Uses Tailwind CSS utility classes (@apply directives)
+ * - Requires specific assets (logo, hero image, award badges)
+ * 
+ * Browser Support:
+ * - Modern browsers (Chrome, Firefox, Safari, Edge)
+ * - Includes necessary vendor prefixes for wider compatibility
+ ******************************************************************************/
+
+/* Login Page Styles */
+.login-container {
+  display: flex;
+  min-height: 100vh;
+  background-color: #fff;
+}
+
+/* Left Side */
+.login-left {
+  flex: 1;
+  background: linear-gradient(to bottom, #FFF1F1, #F3F1FF);
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.feedo-logo {
+  width: 150px;
+  height: auto;
+  margin-bottom: 2rem;
+}
+
+/* Add white container for hero section */
+.hero-image {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 90%;
+  margin: 0 auto;
+}
+
+.hero-image img {
+  max-width: 100%;
+  height: auto;
+  object-fit: contain;
+  margin-bottom: -60px;
+  position: relative;
+  z-index: 0;
+}
+
+/* Updated award badges container with white background */
+.award-badges {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  background: white;
+  border-radius: 16px;
+  padding: 1.5rem 2rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+  width: 100%;
+  max-width: 350px;
+  margin: 0 auto;
+  position: relative;
+  z-index: 1;
+  transition: transform 0.3s ease-in-out;
+}
+
+.award-badges img {
+  width: 80px;
+  height: 80px;
+  object-fit: contain;
+  transition: transform 0.3s ease-in-out;
+}
+
+.award-badges:hover img {
+  transform: scale(1.05);
+}
+
+/* Right Side */
+.login-right {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 2rem 2rem 0;
+  min-height: 100vh;
+}
+
+.login-form-container {
+  max-width: 450px;
+  margin: 0 auto;
+  width: 100%;
+  flex: 1;
+  padding-top: 1rem;
+}
+
+/* Replace the existing auth-toggle styles with these improved versions */
+
+.auth-toggle {
+  position: relative;
+  display: flex;
+  background-color: #f0f2f5;
+  border-radius: 30px;
+  padding: 4px;
+  margin-bottom: 2rem;
+  width: 280px;
+  margin-left: auto;
+  margin-right: auto;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.06);
+  transition: all 0.3s ease;
+}
+
+.toggle-btn {
+  flex: 1;
+  padding: 10px 24px;
+  border: none;
+  background: none;
+  color: #666;
+  font-weight: 500;
+  font-size: 0.95rem;
+  cursor: pointer;
+  position: relative;
+  z-index: 1;
+  transition: all 0.3s ease;
+  border-radius: 26px;
+}
+
+.toggle-btn:focus {
+  outline: none;
+}
+
+.toggle-btn.active {
+  color: #fff;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.toggle-btn:not(.active):hover {
+  color: #0093E9;
+}
+
+.slider {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  bottom: 4px;
+  width: calc(50% - 4px);
+  background: linear-gradient(135deg, #0093E9 0%, #80D0C7 100%);
+  border-radius: 26px;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 2px 4px rgba(0, 147, 233, 0.2),
+              0 4px 8px rgba(0, 147, 233, 0.1);
+}
+
+.slider.right {
+  transform: translateX(calc(100% + 4px));
+}
+
+/* Add hover effect for the entire toggle */
+.auth-toggle:hover {
+  background-color: #e8eaed;
+}
+
+/* Add active state for the toggle */
+.auth-toggle:active {
+  transform: scale(0.98);
+}
+
+/* Remove the old h1 styles */
+h1 {
+  display: none;
+}
+
+/* Google Sign In Button */
+.google-signin-btn {
+  width: 100%;
+  padding: 0.8rem;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  background: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  margin-top: 1rem;
+  transition: all 0.2s ease-in-out;
+}
+
+.google-signin-btn:hover {
+  background-color: #f8f8f8;
+  border-color: #ccc;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.google-signin-btn:active {
+  transform: translateY(0);
+}
+
+/* Divider */
+.divider {
+  text-align: center;
+  margin: 1.5rem 0;
+  position: relative;
+}
+
+.divider::before,
+.divider::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  width: 45%;
+  height: 1px;
+  background-color: #ddd;
+}
+
+.divider::before { left: 0; }
+.divider::after { right: 0; }
+
+/* Form Styles */
+.form-group {
+  margin-bottom: 1.5rem;
+  text-align: left;
+}
+
+label {
+  display: block;
+  margin-bottom: 0.5rem;
+  color: #333;
+  text-align: left;
+}
+
+/* Interactive Form Elements */
+input[type="email"],
+input[type="password"] {
+  width: 100%;
+  padding: 0.8rem;
+  padding-right: 2.5rem;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  text-align: left;
+  transition: all 0.2s ease-in-out;
+}
+
+input[type="email"]:hover,
+input[type="password"]:hover {
+  border-color: #0093E9;
+  box-shadow: 0 0 0 2px rgba(0, 147, 233, 0.1);
+}
+
+input[type="email"]:focus,
+input[type="password"]:focus {
+  outline: none;
+  border-color: #0093E9;
+  box-shadow: 0 0 0 3px rgba(0, 147, 233, 0.2);
+}
+
+.password-input {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.toggle-password {
+  position: absolute;
+  right: 0.8rem;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease-in-out;
+  opacity: 0.7;
+}
+
+.toggle-password:hover {
+  opacity: 1;
+}
+
+/* Interactive Password Toggle */
+.toggle-password {
+  position: absolute;
+  right: 0.8rem;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease-in-out;
+  opacity: 0.7;
+}
+
+.toggle-password:hover {
+  opacity: 1;
+}
+
+/* Remember Me */
+.remember-me {
+  margin-bottom: 1.5rem;
+  text-align: left;
+}
+
+.remember-me label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+}
+
+.remember-me input[type="checkbox"] {
+  width: auto;
+  margin: 0;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+}
+
+.remember-me label:hover {
+  color: #333;
+}
+
+/* Interactive Checkbox */
+.remember-me input[type="checkbox"] {
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+}
+
+.remember-me label:hover {
+  color: #333;
+}
+
+/* Login Button */
+.login-btn {
+  width: 100%;
+  height: 48px;
+  padding: 0 1rem;
+  background: linear-gradient(135deg, #0093E9 0%, #80D0C7 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.login-btn.loading {
+  position: relative;
+  color: transparent;
+}
+
+.login-btn.loading::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 20px;
+  height: 20px;
+  margin: -10px 0 0 -10px;
+  border: 3px solid rgba(255, 255, 255, 0.3);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: button-loading-spinner 0.8s linear infinite;
+}
+
+@keyframes button-loading-spinner {
+  from {
+    transform: rotate(0turn);
+  }
+  to {
+    transform: rotate(1turn);
+  }
+}
+
+.login-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 147, 233, 0.3);
+}
+
+.login-btn:active {
+  transform: translateY(0);
+}
+
+/* Add gradient hover effect */
+.login-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, #80D0C7 0%, #0093E9 100%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.login-btn:hover::before {
+  opacity: 1;
+}
+
+.login-btn span {
+  position: relative;
+  z-index: 1;
+}
+
+/* Update disabled state */
+.login-btn:disabled {
+  background: linear-gradient(135deg, #93c5dd 0%, #b3dcd7 100%);
+  transform: none;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.login-btn:disabled::before {
+  display: none;
+}
+
+/* Interactive Login Button */
+.login-btn {
+  width: 100%;
+  padding: 1rem;
+  background-color: #0093E9;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: all 0.2s ease-in-out;
+}
+
+.login-btn:hover {
+  background-color: #0084d4;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 147, 233, 0.2);
+}
+
+.login-btn:active {
+  transform: translateY(0);
+}
+
+/* Footer */
+.login-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: #666;
+  font-size: 0.9rem;
+  width: 100%;
+  padding: 2rem;
+  background-color: white;
+  border-top: 1px solid #eee;
+  margin-top: 2rem;
+}
+
+.login-footer .copyright,
+.login-footer .help-btn {
+  max-width: 450px;
+  margin: 0 auto;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .login-container {
+    flex-direction: column;
+  }
+  
+  .login-left {
+    display: none;
+  }
+  
+  .login-right {
+    padding: 2rem 1rem 0;
+  }
+
+  .login-footer {
+    padding: 1.5rem 1rem;
+  }
+}
+
+/* Add these styles to your existing Login.css */
+
+/* Error Message */
+.error-message {
+  @apply bg-red-50 text-red-600 p-4 rounded-lg mb-4 text-sm;
+  animation: slideIn 0.3s ease-out;
+}
+
+/* Loading State Styles */
+button:disabled {
+  @apply opacity-70 cursor-not-allowed;
+}
+
+/* Google Sign In Button Loading State */
+.google-signin-btn:disabled {
+  @apply bg-gray-50;
+}
+
+/* Login Button Loading State */
+.login-btn:disabled {
+  @apply bg-blue-400;
+}
+
+/* Animation for error message */
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Input disabled state */
+input:disabled {
+  @apply bg-gray-50 cursor-not-allowed;
+}
+
+/* Update the error styles */
+.error {
+  border-color: #ff4d4f !important;
+}
+
+.error-message {
+  color: #ff4d4f;
+  font-size: 0.8rem;
+  margin-top: 0.25rem;
+  display: block;
+}
+
+.submit-error {
+  text-align: center;
+  margin: 1rem 0;
+  padding: 0.75rem;
+  background-color: #fff2f0;
+  border: 1px solid #ffccc7;
+  border-radius: 8px;
+  color: #ff4d4f;
+}
+
+/* Update disabled state styles */
+input:disabled,
+button:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.login-btn:disabled {
+  background-color: #66b5e8;
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+.google-signin-btn:disabled {
+  background-color: #f5f5f5;
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+/* Add loading state animation */
+@keyframes pulse {
+  0% { opacity: 1; }
+  50% { opacity: 0.7; }
+  100% { opacity: 1; }
+}
+
+button:disabled {
+  animation: pulse 1.5s infinite;
+}
+
+/* Remember me checkbox styles */
+.remember-me input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  margin-right: 8px;
+  accent-color: #0093E9;
+}
+
+.remember-me label {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  user-select: none;
+}
+
+.remember-me label:hover {
+  color: #0093E9;
+}

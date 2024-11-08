@@ -1,0 +1,147 @@
+/**
+ * OpportunityDetails.css
+ * 
+ * Styling for the OpportunityDetails component with the following sections:
+ * - Main container layout and scrolling
+ * - Header section with action buttons
+ * - Progress tracking section
+ * - Content sections (description, benefits, requirements, process)
+ * - Responsive design adjustments
+ * 
+ * Features:
+ * - Tailwind CSS utility classes (@apply)
+ * - Custom animations for progress bars
+ * - Interactive hover effects
+ * - Gradient overlays for buttons
+ * - Shadow effects for depth
+ * - Responsive breakpoints
+ */
+
+/* Main Container - Sets up scrollable container with full height and padding */
+.opportunity-details-page {
+  @apply p-6 bg-gray-50 min-h-screen;
+  height: 100%;
+  overflow-y: auto;
+}
+
+/* Header Section - Sticky header with flex layout for title and action buttons */
+.details-header {
+  @apply sticky top-0 bg-gray-50 z-10 py-4 mb-8
+         flex items-center justify-between;
+}
+
+/* Back Button - Navigation button with hover effect */
+.back-button {
+  @apply flex items-center gap-2 text-gray-600 hover:text-gray-800 transition-all duration-300;
+}
+
+/* Page Title - Main heading styling */
+.page-title {
+  @apply text-2xl font-bold text-gray-700;
+}
+
+/* Action Buttons Container - Flex container for all action buttons */
+.opportunity-action-btns {
+  @apply flex items-center gap-3 ml-auto;
+}
+
+/* Base Button Style - Common styles for all action buttons */
+.opportunity-btn {
+  @apply flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-lg
+         text-gray-600 hover:bg-gray-50 transition-all duration-300 relative overflow-hidden
+         shadow-[0_2px_8px_rgba(0,0,0,0.08)];
+}
+
+/* Button Hover Effect - Gradient overlay animation */
+.opportunity-btn::after {
+  content: '';
+  @apply absolute inset-0 w-full h-full;
+  background: linear-gradient(
+    120deg,
+    transparent 0%,
+    transparent 25%,
+    rgba(255, 255, 255, 0.7) 45%,
+    transparent 65%,
+    transparent 100%
+  );
+  transform: translateX(-100%);
+  transition: transform 0.6s;
+}
+
+/* Primary Button - Special styling for main action button */
+.opportunity-btn--primary {
+  @apply px-6 py-2 bg-[#246BFD] text-white rounded-lg font-medium relative overflow-hidden
+         shadow-[0_2px_8px_rgba(36,107,253,0.25)]
+         hover:bg-blue-600 transition-all duration-300;
+}
+
+/* Save Button - Toggle button with different states */
+.opportunity-btn--save {
+  @apply flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-lg
+         text-gray-600 hover:bg-gray-50 transition-all duration-300 relative overflow-hidden
+         shadow-[0_2px_8px_rgba(0,0,0,0.08)];
+}
+
+/* Saved State Styling */
+.opportunity-btn--save.saved {
+  @apply text-gray-600 bg-gray-50 border-gray-300;
+}
+
+/* Progress Section - Grid layout for metrics */
+.progress-section {
+  @apply grid grid-cols-3 gap-6 mb-8 bg-white p-6 rounded-xl shadow-sm;
+}
+
+/* Progress Bar Animation - Custom animation for progress fills */
+@keyframes progressFill {
+  from {
+    width: 0;
+  }
+  to {
+    width: var(--target-width);
+  }
+}
+
+/* Content Sections - Spacing and layout for main content areas */
+.details-content {
+  @apply space-y-8;
+}
+
+/* Section Cards - Common styling for content section cards */
+.details-content > div {
+  @apply bg-white p-6 rounded-xl shadow-sm;
+}
+
+/* Section Headers */
+.details-content h2 {
+  @apply text-xl font-semibold text-gray-700 mb-6;
+}
+
+/* Benefits and Requirements Lists - Grid layout with hover effects */
+.benefits-section ul,
+.requirements-section ul {
+  @apply grid gap-4;
+}
+
+/* Process Steps - Timeline-like layout */
+.process-steps {
+  @apply space-y-8;
+}
+
+/* Step Numbers - Circular numbered indicators */
+.step-number {
+  @apply w-8 h-8 rounded-full bg-blue-100 text-blue-600 
+         flex items-center justify-center font-semibold text-sm flex-shrink-0
+         border-2 border-blue-200;
+}
+
+/* Responsive Design - Mobile adjustments */
+@media (max-width: 768px) {
+  .details-header {
+    @apply flex-col items-start gap-4;
+  }
+
+  .progress-section {
+    @apply grid-cols-1;
+  }
+} 

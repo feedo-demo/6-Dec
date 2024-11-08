@@ -1,0 +1,134 @@
+.two-step-section {
+  @apply bg-white rounded-lg p-6;
+  animation: slideIn 0.5s ease-out;
+}
+
+.section-title {
+  @apply text-lg font-semibold text-gray-800 mb-6;
+}
+
+.two-step-content {
+  @apply space-y-6;
+}
+
+.security-status {
+  @apply flex items-center gap-4 p-4 bg-gray-50 rounded-lg;
+}
+
+.status-icon {
+  @apply w-10 h-10 p-2 rounded-full;
+}
+
+.status-icon.enabled {
+  @apply text-green-500 bg-green-100;
+}
+
+.status-icon.disabled {
+  @apply text-gray-400 bg-gray-200;
+}
+
+.status-info {
+  @apply flex-1;
+}
+
+.status-title {
+  @apply text-base font-medium text-gray-800;
+}
+
+.status-description {
+  @apply text-sm text-gray-600 mt-1;
+}
+
+/* Authentication Options */
+.authentication-options {
+  @apply space-y-4 mt-6;
+}
+
+.auth-option {
+  @apply flex items-start gap-4 p-4 border border-gray-200 rounded-lg hover:border-[#246BFD] transition-all duration-300;
+}
+
+.option-icon {
+  @apply w-6 h-6 text-[#246BFD];
+}
+
+.option-info {
+  @apply flex-1;
+}
+
+.option-info h4 {
+  @apply text-base font-medium text-gray-800 mb-1;
+}
+
+.option-info p {
+  @apply text-sm text-gray-600 mb-3;
+}
+
+.setup-button {
+  @apply px-4 py-2 text-sm font-medium text-[#246BFD] bg-[#EEF5FF] rounded-lg
+         hover:bg-[#246BFD] hover:text-white transition-all duration-300;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Responsive Design */
+@media (max-width: 640px) {
+  .security-status {
+    @apply flex-col text-center;
+  }
+  
+  .auth-option {
+    @apply flex-col items-center text-center;
+  }
+}
+
+/* Add new enhanced toggle button styles */
+.toggle-button {
+  @apply relative w-12 h-6 rounded-full transition-all duration-300 cursor-pointer;
+  background-color: #E5E7EB;
+}
+
+.toggle-button.active {
+  @apply bg-blue-500;
+}
+
+.toggle-button::after {
+  content: '';
+  @apply absolute top-1 left-1 w-4 h-4 bg-white rounded-full 
+         transition-all duration-300 shadow-sm;
+}
+
+.toggle-button.active::after {
+  @apply transform translate-x-6 bg-white;
+}
+
+.toggle-button:hover {
+  @apply opacity-90;
+}
+
+.toggle-button:active::after {
+  @apply w-5;
+}
+
+.toggle-button.active:active::after {
+  @apply transform translate-x-5;
+}
+
+/* Add a subtle glow effect when active */
+.toggle-button.active {
+  box-shadow: 0 0 10px rgba(37, 99, 235, 0.2);
+}
+
+/* Add a subtle scale animation on click */
+.toggle-button:active {
+  transform: scale(0.95);
+} 

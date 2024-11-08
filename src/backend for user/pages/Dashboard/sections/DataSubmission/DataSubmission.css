@@ -1,0 +1,305 @@
+/**
+ * DataSubmission Component Styles
+ * 
+ * Comprehensive styles for the data submission interface that provides:
+ * - Fixed position sidebar layout
+ * - Progress circle with animated fill
+ * - User profile display
+ * - Submission items list
+ * - Interactive states
+ * 
+ * Features:
+ * - Progress visualization
+ * - Hover animations
+ * - Loading states
+ * - Mobile responsiveness
+ * - Accessibility support
+ */
+
+/* Container Layout */
+.data-submission-container {
+  @apply fixed right-2 top-24 w-72 bg-white rounded-lg border border-gray-200;
+  animation: slideIn 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;  /* Entrance animation */
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);  /* Subtle shadow */
+  transition: all 0.3s ease;  /* Smooth transitions */
+}
+
+/* Container Hover Effect */
+.data-submission-container:hover {
+  box-shadow: 0 8px 12px -1px rgba(0, 0, 0, 0.15);  /* Enhanced shadow */
+}
+
+/* Header Section */
+.data-submission-header {
+  @apply p-4 border-b border-gray-200;  /* Header with bottom border */
+}
+
+/* Section Title */
+.data-submission-title {
+  @apply text-lg font-semibold;  /* Title styling */
+}
+
+/* Progress Section */
+.company-progress-section {
+  @apply p-4 flex flex-col items-center text-center;  /* Progress section layout */
+  transition: all 0.3s ease;  /* Smooth transitions */
+}
+
+/* User Profile Container */
+.user-profile {
+  transition: all 0.3s ease;  /* Profile hover animation */
+  margin-bottom: 1rem;  /* Bottom spacing */
+}
+
+/* Avatar Container */
+.user-avatar-container {
+  @apply relative;  /* For progress circle positioning */
+  width: 120px;
+  height: 120px;
+  background: linear-gradient(135deg, #0093E9 0%, #80D0C7 100%);  /* Gradient background */
+  border-radius: 50%;  /* Circular shape */
+  padding: 3px;  /* Border width */
+  position: relative;  /* For progress circle */
+}
+
+/* User Avatar Image */
+.user-avatar {
+  @apply rounded-full object-cover;  /* Circular image */
+  width: 100%;
+  height: 100%;
+  transition: all 0.3s ease;  /* Hover animation */
+}
+
+/* Avatar Hover Effect */
+.user-profile:hover .user-avatar-container {
+  transform: scale(1.05);  /* Scale up on hover */
+}
+
+/* Company Info Section */
+.company-info {
+  @apply text-center mt-4;  /* Centered text with top margin */
+}
+
+/* Company Name */
+.company-name {
+  @apply text-lg font-semibold;  /* Name styling */
+  background: linear-gradient(135deg, #0093E9 0%, #80D0C7 100%);  /* Gradient text */
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Company Category */
+.company-category {
+  @apply text-sm text-gray-600 mt-1 font-medium;  /* Category styling */
+}
+
+/* Submission Items List */
+.submission-items-list {
+  @apply px-4 pb-4 space-y-2;  /* List layout with spacing */
+}
+
+/* Individual Submission Item */
+.submission-item {
+  @apply w-full flex items-center justify-between p-3 rounded-lg transition-all duration-300;
+  background: white;  /* White background */
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);  /* Subtle shadow */
+}
+
+/* Item Hover Effect */
+.submission-item:hover {
+  @apply bg-gray-50;  /* Background color change */
+  transform: translateX(5px);  /* Slide right */
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);  /* Enhanced shadow */
+}
+
+/* Item Content Layout */
+.item-content {
+  @apply flex items-center gap-3;  /* Content layout */
+}
+
+/* Status Icons */
+.status-icon {
+  @apply w-5 h-5 transition-all duration-300;  /* Icon sizing and animation */
+}
+
+.status-icon.complete {
+  @apply text-green-500;  /* Complete status color */
+}
+
+.status-icon.incomplete {
+  @apply text-yellow-500;  /* Incomplete status color */
+}
+
+/* Icon Hover Animation */
+.submission-item:hover .status-icon {
+  transform: scale(1.1) rotate(10deg);  /* Scale and rotate on hover */
+}
+
+/* Item Text Styles */
+.item-text {
+  @apply text-left transition-all duration-300;  /* Text alignment and animation */
+}
+
+/* Item Type Label */
+.item-type {
+  @apply text-sm font-medium text-gray-900;  /* Type text styling */
+}
+
+/* Status Label */
+.item-label {
+  @apply text-xs transition-colors duration-300;  /* Label styling */
+}
+
+.item-label.complete {
+  @apply text-green-500;  /* Complete label color */
+}
+
+.item-label.incomplete {
+  @apply text-blue-500;  /* Incomplete label color */
+}
+
+/* New Item Label */
+.new-label {
+  @apply ml-2 text-xs text-blue-500;  /* New item indicator */
+}
+
+/* Navigation Icon */
+.chevron-icon {
+  @apply w-5 h-5 text-gray-400 transition-all duration-300;  /* Icon styling */
+}
+
+/* Navigation Icon Hover Effect */
+.submission-item:hover .chevron-icon {
+  @apply text-blue-500;  /* Color change */
+  transform: translateX(3px);  /* Slide right */
+}
+
+/* Entrance Animation */
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Progress Circle Styles */
+.progress-circle-container {
+  position: absolute;
+  top: -8px;
+  left: -8px;
+  right: -8px;
+  bottom: -8px;
+  animation: appear 0.8s ease forwards;  /* Entrance animation */
+}
+
+/* Progress Circle SVG */
+.progress-circle {
+  transform: rotate(-90deg);  /* Start from top */
+  transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);  /* Smooth animation */
+}
+
+/* Progress Circle Background */
+.progress-circle-bg {
+  fill: none;
+  stroke: rgba(229, 231, 235, 0.5);  /* Light gray background */
+  stroke-width: 4;
+}
+
+/* Progress Circle Path */
+.progress-circle-path {
+  fill: none;
+  stroke: url(#progressGradient);  /* Gradient stroke */
+  stroke-width: 4;
+  stroke-linecap: round;
+  transition: stroke-dashoffset 1.2s cubic-bezier(0.4, 0, 0.2, 1);  /* Progress animation */
+}
+
+/* Progress Percentage Pill */
+.progress-percentage-pill {
+  @apply absolute text-[10px] font-semibold;  /* Pill styling */
+  top: 10px;
+  right: -10px;
+  background: linear-gradient(135deg, #0093E9 0%, #80D0C7 100%);  /* Gradient background */
+  color: #ffffff;
+  padding: 2px 16px;
+  border-radius: 20px;
+  transform: none;
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.12);
+  white-space: nowrap;
+  min-width: 65px;
+  text-align: center;
+  animation: fadeInScale 0.6s ease forwards;  /* Entrance animation */
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  border: 2px solid white;
+  -webkit-font-smoothing: antialiased;
+  line-height: 1.4;
+  font-size: 10px;
+  z-index: 10;
+}
+
+/* Animations */
+@keyframes appear {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes fadeInScale {
+  from {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes progressAnimation {
+  from {
+    stroke-dashoffset: 364;  /* Initial offset */
+  }
+}
+
+/* Loading States */
+.loading-avatar {
+  background: linear-gradient(135deg, #f0f0f0 0%, #e0e0e0 100%) !important;  /* Loading gradient */
+  animation: pulse 1.5s ease-in-out infinite;  /* Loading animation */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Loading Spinner */
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid #f3f3f3;
+  border-top: 3px solid #0093E9;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;  /* Spinner animation */
+  position: static;
+  margin: auto;
+}
+
+/* Loading Animations */
+@keyframes pulse {
+  0% { opacity: 0.6; }
+  50% { opacity: 1; }
+  100% { opacity: 0.6; }
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}

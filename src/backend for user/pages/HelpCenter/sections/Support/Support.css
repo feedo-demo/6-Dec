@@ -1,0 +1,198 @@
+/**
+ * Support Section Component Styles
+ * 
+ * Comprehensive styles for the support interface that provides:
+ * - Interactive support buttons with animations
+ * - Gradient effects and transitions
+ * - Support representative image
+ * - Responsive design
+ * - Loading states
+ * 
+ * Features:
+ * - Button animations
+ * - Shine effects
+ * - Hover states
+ * - Mobile responsiveness
+ * - Loading indicators
+ */
+
+/* Support Section Container */
+.support-section {
+  @apply bg-white rounded-lg p-6 flex flex-col items-start
+         shadow-sm overflow-hidden relative h-full;  /* Base container styles */
+  transition: box-shadow 0.3s ease;  /* Smooth shadow transition */
+}
+
+/* Container hover effect */
+.support-section:hover {
+  box-shadow: 0 8px 16px -2px rgba(0, 0, 0, 0.1);  /* Enhanced shadow on hover */
+}
+
+/* Support Content Container */
+.support-content {
+  @apply w-full;  /* Full width content */
+}
+
+/* Support Title */
+.support-title {
+  @apply text-2xl font-bold text-gray-800 mb-2;  /* Title styling */
+  opacity: 0;
+  animation: slideInFromRight 0.5s ease-out forwards;  /* Entrance animation */
+}
+
+/* Support Subtitle */
+.support-subtitle {
+  @apply text-gray-600 mb-8;  /* Subtitle styling */
+  opacity: 0;
+  animation: fadeIn 0.5s ease-out 0.2s forwards;  /* Delayed entrance animation */
+}
+
+/* Support Actions Container */
+.support-actions {
+  @apply space-y-4 mb-8;  /* Vertical spacing between buttons */
+}
+
+/* Support Button Base Styles */
+.support-btn {
+  @apply w-full flex items-center gap-3 px-6 py-3 rounded-lg
+         text-white font-medium relative overflow-hidden;  /* Button layout */
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);  /* Smooth transitions */
+  opacity: 0;
+  transform: translateX(-20px);  /* Initial position for animation */
+}
+
+/* Staggered button animations */
+.support-btn:nth-child(1) { animation: slideIn 0.5s ease-out 0.3s forwards; }
+.support-btn:nth-child(2) { animation: slideIn 0.5s ease-out 0.4s forwards; }
+.support-btn:nth-child(3) { animation: slideIn 0.5s ease-out 0.5s forwards; }
+
+/* Button Text */
+.btn-text {
+  @apply relative z-10;  /* Ensure text stays above shine effect */
+}
+
+/* Button Icon */
+.btn-icon {
+  @apply w-5 h-5 relative z-10 transition-transform duration-300;  /* Icon styling */
+}
+
+/* Icon hover effect */
+.support-btn:hover .btn-icon {
+  transform: scale(1.2) rotate(5deg);  /* Scale and rotate icon on hover */
+}
+
+/* Button Shine Effect */
+.btn-shine {
+  @apply absolute inset-0 opacity-0;  /* Shine overlay positioning */
+  background: linear-gradient(
+    110deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.3) 25%,
+    rgba(255, 255, 255, 0.3) 50%,
+    transparent 75%
+  );
+  transform: translateX(-100%) skewX(-15deg);  /* Initial shine position */
+  transition: transform 0.6s ease;  /* Smooth shine animation */
+}
+
+/* Shine animation on hover */
+.support-btn:hover .btn-shine {
+  transform: translateX(100%) skewX(-15deg);  /* Move shine across button */
+  opacity: 1;
+}
+
+/* Button Color Variants */
+.support-btn.create {
+  @apply bg-[#246BFD];  /* Create button color */
+  box-shadow: 0 4px 12px rgba(36, 107, 253, 0.2);  /* Button shadow */
+}
+
+.support-btn.email {
+  @apply bg-[#00BCD4];  /* Email button color */
+  box-shadow: 0 4px 12px rgba(0, 188, 212, 0.2);  /* Button shadow */
+}
+
+.support-btn.chat {
+  @apply bg-[#4CAF50];  /* Chat button color */
+  box-shadow: 0 4px 12px rgba(76, 175, 80, 0.2);  /* Button shadow */
+}
+
+/* Button Hover Effects */
+.support-btn:hover {
+  transform: translateY(-2px);  /* Lift button on hover */
+}
+
+/* Button Active State */
+.support-btn.active {
+  transform: scale(0.98) translateY(1px);  /* Press effect */
+}
+
+/* Enhanced Shadows on Hover */
+.support-btn.create:hover { box-shadow: 0 6px 16px rgba(36, 107, 253, 0.3); }
+.support-btn.email:hover { box-shadow: 0 6px 16px rgba(0, 188, 212, 0.3); }
+.support-btn.chat:hover { box-shadow: 0 6px 16px rgba(76, 175, 80, 0.3); }
+
+/* Support Image Container */
+.support-image {
+  @apply w-full flex justify-center mt-auto -mb-6;  /* Image positioning */
+  opacity: 0;
+  animation: fadeInUp 0.6s ease-out 0.6s forwards;  /* Entrance animation */
+}
+
+/* Support Image */
+.support-image img {
+  @apply w-64 h-auto block;  /* Image sizing */
+  margin-bottom: 0;
+  vertical-align: bottom;
+}
+
+/* Animations */
+@keyframes slideInFromRight {
+  from {
+    opacity: 0;
+    transform: translateX(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideIn {
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes fadeIn {
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Responsive Design */
+@media (max-width: 1280px) {
+  .support-section {
+    @apply flex-row items-center;  /* Adjust layout for smaller screens */
+  }
+
+  .support-content {
+    @apply pr-8;  /* Add spacing between content and image */
+  }
+
+  .support-image {
+    @apply mt-0 -mb-0;  /* Reset image margins */
+  }
+} 

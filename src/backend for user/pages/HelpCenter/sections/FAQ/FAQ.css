@@ -1,0 +1,134 @@
+/**
+ * FAQ Section Component Styles
+ * 
+ * Comprehensive styles for the FAQ interface that provides:
+ * - Expandable FAQ items with animations
+ * - Interactive hover states
+ * - Progress tracking
+ * - Smooth transitions
+ * - Responsive design
+ * 
+ * Features:
+ * - Accordion animations
+ * - Hover effects
+ * - Progress indicators
+ * - Mobile responsiveness
+ * - Loading states
+ */
+
+/* FAQ Section Container */
+.faq-section {
+  @apply bg-white rounded-lg p-6 h-full;  /* White background with padding */
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);  /* Subtle shadow */
+  transition: box-shadow 0.3s ease;  /* Smooth shadow transition */
+}
+
+/* Section hover effect */
+.faq-section:hover {
+  box-shadow: 0 8px 12px -1px rgba(0, 0, 0, 0.1);  /* Enhanced shadow on hover */
+}
+
+/* Section Title */
+.section-title {
+  @apply text-2xl font-bold text-gray-800 mb-6;  /* Title styling */
+  animation: slideInFromLeft 0.5s ease-out forwards;  /* Entrance animation */
+}
+
+/* FAQ Items List */
+.faq-list {
+  @apply space-y-4;  /* Vertical spacing between items */
+}
+
+/* Individual FAQ Item */
+.faq-item {
+  @apply bg-white rounded-lg border border-gray-200 overflow-hidden
+         transition-all duration-300;  /* Item container styling */
+  animation: fadeIn 0.5s ease-out forwards;  /* Entrance animation */
+}
+
+/* FAQ Item Hover Effect */
+.faq-item:hover {
+  @apply border-blue-200;  /* Highlight border on hover */
+  transform: translateX(4px);  /* Slight shift on hover */
+  box-shadow: 0 4px 12px -2px rgba(36, 107, 253, 0.1);  /* Hover shadow */
+}
+
+/* Active FAQ Item */
+.faq-item.active {
+  @apply shadow-md border-blue-300;  /* Enhanced styling for active state */
+  background: linear-gradient(to right, #ffffff, #f8faff);  /* Subtle gradient */
+}
+
+/* FAQ Question Button */
+.faq-question {
+  @apply w-full flex items-center justify-between p-4 text-left
+         text-gray-800 font-medium hover:bg-gray-50/50
+         transition-all duration-300;  /* Question button styling */
+}
+
+/* Question Hover Effect */
+.faq-question:hover {
+  @apply text-blue-600;  /* Text color change on hover */
+}
+
+/* Icon Styling */
+.faq-icon {
+  @apply w-5 h-5 text-gray-400 transition-transform duration-300;  /* Icon base styles */
+}
+
+/* Active Icon State */
+.faq-item.active .faq-icon {
+  @apply transform rotate-180 text-blue-500;  /* Rotate icon when active */
+}
+
+/* Answer Container */
+.faq-answer {
+  max-height: 0;  /* Collapsed by default */
+  @apply overflow-hidden transition-all duration-300;  /* Smooth height transition */
+  opacity: 0;
+  transform: translateY(-10px);  /* Initial position for animation */
+}
+
+/* Active Answer State */
+.faq-item.active .faq-answer {
+  @apply p-4 pt-0;  /* Padding when expanded */
+  max-height: 1000px;  /* Allow content to expand */
+  opacity: 1;
+  transform: translateY(0);  /* Final position */
+}
+
+/* Answer Text */
+.faq-answer p {
+  @apply text-gray-600;  /* Answer text styling */
+}
+
+/* Stagger Animation for FAQ Items */
+.faq-item:nth-child(1) { animation-delay: 0.1s; }
+.faq-item:nth-child(2) { animation-delay: 0.2s; }
+.faq-item:nth-child(3) { animation-delay: 0.3s; }
+.faq-item:nth-child(4) { animation-delay: 0.4s; }
+.faq-item:nth-child(5) { animation-delay: 0.5s; }
+.faq-item:nth-child(6) { animation-delay: 0.6s; }
+
+/* Animations */
+@keyframes slideInFromLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+} 

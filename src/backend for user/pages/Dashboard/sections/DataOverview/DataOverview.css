@@ -1,0 +1,211 @@
+/**
+ * DataOverview Component Styles
+ * 
+ * Comprehensive styles for the data overview interface that provides:
+ * - Interactive data cards with animations
+ * - Progress tracking visualization
+ * - Hover effects and transitions
+ * - Responsive grid layout
+ * - Loading states
+ * 
+ * Features:
+ * - Card animations
+ * - Progress bars
+ * - Interactive states
+ * - Mobile responsiveness
+ * - Loading indicators
+ */
+
+/* Main Container */
+.data-overview {
+  @apply w-full pt-10;  /* Full width container with top padding */
+}
+
+/* Cards Container */
+.overview-cards-container {
+  @apply flex gap-6 w-full max-w-[calc(100%-288px)];  /* Flexible container with spacing */
+}
+
+/* Individual Card */
+.overview-card {
+  @apply w-[calc(33.333%-16px)] rounded-[20px] text-white transition-all duration-300 relative overflow-hidden;
+  transform-style: preserve-3d;  /* For 3D hover effects */
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.08);
+}
+
+/* Card Glow Effect */
+.overview-card::before {
+  content: '';
+  @apply absolute inset-0 rounded-[20px];
+  background: radial-gradient(circle at center, rgba(255,255,255,0.35) 0%, rgba(255,255,255,0.1) 45%, rgba(255,255,255,0) 65%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+}
+
+/* Card Hover Effects */
+.overview-card:hover::before {
+  opacity: 1;
+  animation: glowPulse 1.5s infinite;
+}
+
+.overview-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 16px rgba(0, 0, 0, 0.12);
+}
+
+/* Card Header */
+.card-header {
+  @apply flex justify-between items-center p-6 pb-0;
+  padding-left: 2.5rem;
+}
+
+/* Icon Container */
+.card-header .icon-wrapper {
+  @apply flex items-center justify-center bg-white/25 rounded-[50%] w-14 h-14;
+  display: grid;
+  place-items: center;
+  backdrop-filter: blur(4px);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  margin-left: 1rem;
+}
+
+/* Icon Styling */
+.card-header .icon-wrapper .card-icon {
+  @apply w-7 h-7 text-white stroke-[1.5];
+  transition: all 0.3s ease;
+  margin: auto;
+  display: block;
+}
+
+/* Icon Hover Effects */
+.overview-card:hover .icon-wrapper {
+  @apply bg-white/30;
+  transform: scale(1.1) rotate(5deg);
+}
+
+.overview-card:hover .card-icon {
+  transform: scale(1.1);
+}
+
+/* View More Button */
+.view-more-btn {
+  @apply bg-white/20 px-4 py-1.5 rounded-full text-sm font-medium 
+         transition-all duration-300;
+}
+
+.view-more-btn:hover {
+  @apply bg-white/30;
+  transform: translateX(5px);
+}
+
+/* Card Content */
+.card-content {
+  @apply flex justify-between items-start p-6 pb-0;
+}
+
+/* Card Title */
+.overview-card .card-title {
+  @apply text-2xl font-medium text-white !important;
+}
+
+/* Card Value */
+.card-value {
+  @apply text-4xl font-bold transition-all duration-300;
+  text-shadow: 2px 3px 6px rgba(0, 0, 0, 0.15),
+               0 2px 3px rgba(0, 0, 0, 0.1);
+}
+
+/* Value Hover Effect */
+.overview-card:hover .card-value {
+  transform: scale(1.1);
+  text-shadow: 2px 4px 8px rgba(0, 0, 0, 0.18),
+               0 2px 4px rgba(0, 0, 0, 0.12);
+}
+
+/* Stats Container */
+.stats-container {
+  @apply mt-4 bg-white rounded-[20px] space-y-4;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 
+              0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  min-height: 200px;
+  width: 100%;
+  padding: 24px;
+}
+
+/* Stats Row */
+.stats-row {
+  @apply w-full transition-all duration-200;
+  border-radius: 0.5rem;
+  min-width: 250px;
+}
+
+/* Stats Row Content */
+.stats-row-content {
+  @apply flex flex-row items-center justify-start;
+  width: 100%;
+  padding: 8px 16px;
+}
+
+/* Stats Icon */
+.stats-row-icon {
+  @apply w-5 h-5 text-gray-400 transition-all duration-300;
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+/* Stats Label */
+.stats-row-label {
+  @apply text-[15px] text-gray-600 font-medium;
+  display: inline-block;
+  margin: 0 12px;
+  flex: 1;
+  min-width: 120px;
+}
+
+/* Stats Value */
+.stats-row-value {
+  @apply text-[15px] font-semibold text-gray-900;
+  display: inline-block;
+  flex-shrink: 0;
+  min-width: 30px;
+  text-align: right;
+  margin-right: 16px;
+}
+
+/* Stats Row Hover Effect */
+.stats-row:hover .stats-row-icon {
+  @apply text-blue-500;
+  transform: rotate(10deg);
+}
+
+/* Animations */
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(30px) scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Card Entrance Animation */
+.overview-card {
+  animation: slideIn 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+}
+
+/* Staggered Animation Delay */
+.overview-card:nth-child(1) { animation-delay: 0.1s; }
+.overview-card:nth-child(2) { animation-delay: 0.2s; }
+.overview-card:nth-child(3) { animation-delay: 0.3s; }
+
+/* Glow Animation */
+@keyframes glowPulse {
+  0% { opacity: 0.8; }
+  50% { opacity: 1; }
+  100% { opacity: 0.8; }
+}
+  

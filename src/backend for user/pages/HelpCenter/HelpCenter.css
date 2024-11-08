@@ -1,0 +1,61 @@
+/**
+ * HelpCenter Component Styles
+ * 
+ * Comprehensive styles for the help center interface that provides:
+ * - Side-by-side layout with FAQ and Support sections
+ * - Responsive design that stacks on mobile
+ * - Smooth animations for transitions
+ * - Interactive hover states
+ * - Loading states
+ * 
+ * Features:
+ * - Split layout
+ * - Entrance animations
+ * - Hover effects
+ * - Mobile responsiveness
+ * - Loading states
+ */
+
+/* Main Container */
+.help-center-page {
+  @apply p-6 bg-gray-50 min-h-screen pt-16;  /* Full height container with padding */
+  animation: fadeIn 0.5s ease-out;  /* Entrance animation */
+}
+
+/* Page Content - Side-by-side Layout */
+.page-content {
+  @apply flex gap-6;  /* Flexible layout with spacing between columns */
+}
+
+/* Left Column - FAQ Section */
+.left-column {
+  @apply flex-1;  /* Takes up remaining space */
+}
+
+/* Right Column - Support Section */
+.right-column {
+  @apply w-[400px] flex-shrink-0;  /* Fixed width column that doesn't shrink */
+}
+
+/* Entrance Animation */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Responsive Design */
+@media (max-width: 1280px) {
+  .page-content {
+    @apply flex-col;  /* Stack columns vertically on smaller screens */
+  }
+  
+  .right-column {
+    @apply w-full;  /* Full width on smaller screens */
+  }
+} 

@@ -1,0 +1,28 @@
+/* Main Container */
+.subscription-page {
+  @apply p-6 bg-gray-50 min-h-screen pt-8;
+  animation: fadeIn 0.5s ease-out;
+}
+
+/* Add shared animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+} 

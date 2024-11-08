@@ -1,0 +1,29 @@
+/* Add loading spinner styles */
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.loading {
+  position: relative;
+  cursor: not-allowed;
+}
+
+.loading:disabled {
+  opacity: 0.7;
+}
+
+.loading .animate-spin {
+  animation: spin 0.8s linear infinite;
+}
+
+/* Ensure text is hidden during loading */
+.loading.text-transparent {
+  color: transparent;
+}
+
+/* Keep icon visible but faded during loading */
+.loading .w-5 {
+  opacity: 0.5;
+} 

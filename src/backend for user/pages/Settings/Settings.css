@@ -1,0 +1,25 @@
+/* Settings Page Styles */
+.settings-page {
+  @apply p-6 bg-gray-50 min-h-screen pt-8;
+  animation: fadeIn 0.5s ease-out;
+}
+
+.settings-content {
+  @apply max-w-[1200px] mx-auto;
+}
+
+.settings-layout {
+  @apply flex gap-6 items-start;
+}
+
+/* Animation */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+} 

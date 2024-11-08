@@ -1,0 +1,340 @@
+.profile-section {
+  @apply bg-white rounded-lg p-6;
+  min-width: max-content;
+  width: fit-content;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  animation: slideIn 0.5s ease-out;
+}
+
+.section-title {
+  @apply text-lg font-semibold text-gray-800 mb-6;
+}
+
+.profile-content {
+  @apply flex flex-col items-center;
+  min-width: 240px;
+}
+
+/* Enhanced Profile Photo Styles */
+.profile-photo-container {
+  @apply mb-6 relative;
+  perspective: 1000px;
+}
+
+.profile-photo {
+  @apply relative cursor-pointer transition-all duration-300;
+  transform-style: preserve-3d;
+}
+
+.photo-wrapper {
+  @apply relative w-24 h-24 rounded-full overflow-hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+}
+
+.photo {
+  @apply w-full h-full object-cover transition-transform duration-300;
+}
+
+.profile-photo.hovered .photo-wrapper {
+  box-shadow: 0 8px 24px rgba(36, 107, 253, 0.2);
+}
+
+.profile-photo.hovered .photo {
+  transform: scale(1.1);
+}
+
+/* Photo Overlay */
+.photo-overlay {
+  @apply absolute inset-0 bg-black/50 flex flex-col items-center justify-center
+         opacity-0 transition-opacity duration-300 cursor-pointer;
+  backdrop-filter: blur(2px);
+}
+
+.photo-overlay:hover {
+  @apply opacity-100;
+}
+
+.overlay-icon {
+  @apply text-white text-2xl mb-1;
+}
+
+.overlay-text {
+  @apply text-white text-xs font-medium;
+}
+
+/* Status Indicator */
+.status-indicator {
+  @apply absolute -bottom-1 -right-1 w-6 h-6 bg-white rounded-full
+         flex items-center justify-center shadow-md;
+}
+
+.status-dot {
+  @apply w-3 h-3 rounded-full bg-green-500;
+  animation: pulse 2s infinite;
+}
+
+/* Profile Info */
+.profile-info {
+  @apply text-center mb-8 w-full;
+}
+
+.profile-name {
+  @apply text-lg font-medium text-gray-800 mb-1 flex items-center justify-center gap-2;
+}
+
+.profile-status {
+  @apply text-xs px-2 py-0.5 bg-green-100 text-green-600 rounded-full font-medium;
+}
+
+.profile-category {
+  @apply text-sm text-gray-500 mb-4;
+}
+
+/* Profile Stats */
+.profile-stats {
+  @apply flex items-center justify-center gap-4 mt-4 px-4 py-3 
+         bg-gray-50 rounded-lg;
+}
+
+.stat-item {
+  @apply flex flex-col items-center;
+}
+
+.stat-value {
+  @apply text-lg font-semibold text-gray-800;
+}
+
+.stat-label {
+  @apply text-xs text-gray-500;
+}
+
+.stat-divider {
+  @apply w-px h-8 bg-gray-200;
+}
+
+/* Enhanced Navigation */
+.profile-nav {
+  @apply w-full space-y-2;
+}
+
+.nav-item {
+  @apply w-full flex items-center gap-3 px-4 py-3 rounded-lg
+         text-gray-600 hover:bg-gray-50 transition-all duration-300;
+}
+
+.nav-item.active {
+  @apply bg-[#EEF5FF] text-[#246BFD];
+  box-shadow: 0 2px 8px rgba(36, 107, 253, 0.1);
+}
+
+.nav-item:hover:not(.active) {
+  @apply transform translate-x-1;
+}
+
+.nav-icon {
+  @apply w-5 h-5 transition-transform duration-300;
+}
+
+.nav-item:hover .nav-icon {
+  @apply transform scale-110;
+}
+
+/* Animations */
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.4);
+  }
+  70% {
+    box-shadow: 0 0 0 6px rgba(34, 197, 94, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(34, 197, 94, 0);
+  }
+}
+
+/* Hover Animations */
+.profile-photo-container:hover {
+  transform: translateY(-2px);
+}
+
+.profile-photo-container:active {
+  transform: translateY(0);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .profile-section {
+    @apply w-full;
+  }
+  
+  .profile-stats {
+    @apply justify-around;
+  }
+}
+
+/* Profile Email */
+.profile-email {
+  @apply text-sm text-gray-500 mb-2;
+}
+
+/* Photo Upload States */
+.photo.uploading {
+  @apply opacity-50;
+  filter: grayscale(50%);
+}
+
+/* Hidden file input */
+.hidden {
+  display: none;
+}
+
+/* Photo Overlay as Label */
+.photo-overlay {
+  @apply absolute inset-0 bg-black/50 flex flex-col items-center justify-center
+         opacity-0 transition-opacity duration-300 cursor-pointer;
+  backdrop-filter: blur(2px);
+}
+
+.photo-overlay:hover {
+  @apply opacity-100;
+}
+
+/* Loading State */
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.uploading .overlay-icon {
+  animation: spin 1s linear infinite;
+}
+
+/* Add these new styles */
+.photo-wrapper {
+  position: relative;
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  overflow: hidden;
+  background-color: #f3f4f6;
+}
+
+.photo {
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.photo.loaded {
+  opacity: 1;
+}
+
+.photo-placeholder {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #f3f4f6;
+}
+
+.placeholder-icon {
+  width: 40%;
+  height: 40%;
+  color: #9ca3af;
+}
+
+/* Update existing styles */
+.profile-photo {
+  position: relative;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  width: 96px;
+  height: 96px;
+}
+
+.photo-wrapper img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+  transition: transform 0.3s ease;
+}
+
+/* Add skeleton loading animations */
+@keyframes shimmer {
+  0% {
+    background-position: -468px 0;
+  }
+  100% {
+    background-position: 468px 0;
+  }
+}
+
+.skeleton {
+  background: #f6f7f8;
+  background-image: linear-gradient(
+    to right,
+    #f6f7f8 0%,
+    #edeef1 20%,
+    #f6f7f8 40%,
+    #f6f7f8 100%
+  );
+  background-repeat: no-repeat;
+  background-size: 800px 104px;
+  animation: shimmer 1.5s infinite linear;
+}
+
+.skeleton-photo {
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+}
+
+.skeleton-text {
+  height: 16px;
+  border-radius: 4px;
+}
+
+.skeleton-text.name {
+  width: 140px;
+  margin: 1rem auto 0.5rem;
+}
+
+.skeleton-text.email {
+  width: 180px;
+  margin: 0.5rem auto;
+}
+
+.skeleton-text.type {
+  width: 100px;
+  margin: 0.5rem auto;
+}
+
+/* Add loading state styles */
+.profile-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 4px;
+  border-radius: 8px;
+}
