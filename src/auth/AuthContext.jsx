@@ -5,7 +5,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { auth, db } from '../firebase/config';
 import { onAuthStateChanged, updateProfile as updateFirebaseProfile, updatePassword, sendPasswordResetEmail } from 'firebase/auth';
-import { doc, getDoc, query, collection, where, getDocs, setDoc, updateDoc, deleteDoc } from 'firebase/firestore';
+import { doc, getDoc, query, collection, where, getDocs, setDoc, updateDoc, deleteDoc, serverTimestamp } from 'firebase/firestore';
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword, signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
 import { createCustomUserId } from '../backend/constants/profileData';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
@@ -27,50 +27,108 @@ const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   const login = async (email, password) => {
-    const userCredential = await signInWithEmailAndPassword(auth, email, password);
-    return userCredential;
+    try {
+      // First authenticate with Firebase
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const authUser = userCredential.user;
+
+      // Check profile type collections
+      const profileTypes = ['entrepreneur', 'student', 'jobseeker', 'company'];
+      let userData = null;
+
+      for (const profileType of profileTypes) {
+        const userDoc = await getDoc(doc(db, profileType, authUser.uid));
+        if (userDoc.exists()) {
+          userData = {
+            ...authUser,
+            ...userDoc.data(),  // Get all user data
+            profileType,        // Add the profile type
+            displayName: authUser.displayName || userDoc.data().displayName,
+            isEmailVerified: authUser.emailVerified,
+            provider: authUser.providerData[0]?.providerId || 'email'
+          };
+          break;
+        }
+      }
+
+      // Check if user is pending
+      if (!userData) {
+        const pendingDoc = await getDoc(doc(db, 'pending_users', authUser.uid));
+        if (pendingDoc.exists()) {
+          userData = {
+            ...authUser,
+            ...pendingDoc.data(),
+            isPending: true
+          };
+        }
+      }
+
+      // Update user state if we found data
+      if (userData) {
+        setUser(userData);
+      } else {
+        // If no user data found, sign out and throw error
+        await auth.signOut();
+        throw new Error('User data not found. Please try again.');
+      }
+
+      return userCredential;
+    } catch (error) {
+      // If Firebase auth failed, throw the original error
+      if (error.code) {
+        throw error;
+      }
+      // For our custom errors, wrap them with a code
+      throw {
+        code: 'auth/user-data-not-found',
+        message: error.message
+      };
+    }
   };
 
   const signup = async (email, password, userData) => {
     try {
-        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-        
-        // Update the user's display name in Firebase Auth
-        await updateFirebaseProfile(userCredential.user, {
-            displayName: `${userData.firstName} ${userData.lastName}`
-        });
-        
-        const customUserId = createCustomUserId(userData.firstName, userData.lastName);
-        
-        const userDocRef = doc(db, 'users', customUserId);
-        
-        // Create user document with all required fields
-        const userDocData = {
-            ...userData,
-            email,
-            displayName: `${userData.firstName} ${userData.lastName}`, // Add display name to Firestore
-            createdAt: new Date().toISOString(),
-            lastLoginAt: new Date().toISOString(),
-            provider: 'email',
-            uid: customUserId,
-            authUid: userCredential.user.uid,
-            status: 'active',
-            isEmailVerified: false
-        };
-        
-        await setDoc(userDocRef, userDocData);
+      // Create auth user
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
 
-        // Update local user state
-        setUser({
-            ...userCredential.user,
-            ...userDocData,
-            isGoogleUser: false
+      // Update the user's profile with displayName if provided
+      if (userData.displayName) {
+        await updateFirebaseProfile(user, {
+          displayName: userData.displayName
         });
+      }
 
-        return userCredential;
+      // Create pending user document in Firestore
+      const pendingUserRef = doc(db, 'pending_users', user.uid);
+      await setDoc(pendingUserRef, {
+        authUid: user.uid,
+        email: user.email,
+        firstName: userData.firstName,
+        lastName: userData.lastName,
+        displayName: userData.displayName,
+        phoneNumber: userData.phoneNumber,
+        createdAt: serverTimestamp(),
+        lastLoginAt: serverTimestamp(),
+        isEmailVerified: user.emailVerified,
+        status: 'pending',
+        provider: 'email'
+      });
+
+      // Update local user state
+      setUser({
+        ...userData,
+        uid: user.uid,
+        email: user.email,
+        displayName: userData.displayName,
+        isPending: true,
+        isGoogleUser: false
+      });
+
+      return user;
     } catch (error) {
-        console.error('Signup error:', error);
-        throw error;
+      console.error('Signup error:', error);
+      throw error;
     }
   };
 
@@ -79,76 +137,93 @@ const AuthProvider = ({ children }) => {
     
     try {
       const result = await signInWithPopup(auth, provider);
-      
-      // Check if user document exists
-      const userDocs = await getDocs(
-        query(collection(db, 'users'), 
-        where('authUid', '==', result.user.uid))
-      );
-      
-      // If this is a login attempt and user doesn't exist
-      if (!isSignUp && userDocs.empty) {
-        await auth.signOut();
-        setUser(null);
-        throw new Error('No account found. Please sign up first.');
+
+      // For signup flow, first check pending_users
+      if (isSignUp) {
+        const pendingDoc = await getDoc(doc(db, 'pending_users', result.user.uid));
+        if (pendingDoc.exists()) {
+          // User is in the middle of signup process
+          setUser({
+            ...result.user,
+            ...pendingDoc.data(),
+            isPending: true
+          });
+          return { isNewUser: true };
+        }
       }
       
-      // If this is a signup attempt and user already exists
-      if (isSignUp && !userDocs.empty) {
-        await auth.signOut();
-        setUser(null);
-        throw new Error('Account already exists. Please login instead.');
+      // Check if user exists in any profile type collection
+      const profileTypes = ['entrepreneur', 'student', 'jobseeker', 'company'];
+      let existingUserData = null;
+
+      for (const profileType of profileTypes) {
+        const userDoc = await getDoc(doc(db, profileType, result.user.uid));
+        if (userDoc.exists()) {
+          existingUserData = { 
+            ...userDoc.data().profile,
+            ...userDoc.data().settings,
+            profileType 
+          };
+          break;
+        }
       }
-      
-      // For new user signup
-      if (isSignUp && userDocs.empty) {
-        const nameParts = result.user.displayName?.split(' ') || ['', ''];
-        const firstName = nameParts[0];
-        const lastName = nameParts.slice(1).join(' ');
+
+      // Handle signup vs login flows
+      if (isSignUp) {
+        if (existingUserData) {
+          // User already exists, should login instead
+          await auth.signOut();
+          setUser(null);
+          throw new Error('Account already exists. Please login instead.');
+        }
+
+        // Create new pending user
+        const pendingUserRef = doc(db, 'pending_users', result.user.uid);
         
-        const customUserId = createCustomUserId(firstName, lastName);
-        const userDocRef = doc(db, 'users', customUserId);
+        // Fix: Better name splitting logic
+        const fullName = result.user.displayName || '';
+        const nameParts = fullName.split(' ');
+        const firstName = nameParts[0] || '';
+        // Fix: Join the rest of the name parts for lastName
+        const lastName = nameParts.slice(1).join(' ') || '';
         
-        // Create the user document with all required fields
-        await setDoc(userDocRef, {
-          firstName,
-          lastName,
-          email: result.user.email,
-          phoneNumber: result.user.phoneNumber || '',
-          createdAt: new Date().toISOString(),
-          lastLoginAt: new Date().toISOString(),
-          provider: 'google',
-          uid: customUserId,
+        await setDoc(pendingUserRef, {
           authUid: result.user.uid,
-          photoURL: result.user.photoURL,
+          createdAt: serverTimestamp(),
+          email: result.user.email,
+          firstName: firstName,
+          lastName: lastName,
           isEmailVerified: result.user.emailVerified,
-          status: 'active'
+          lastLoginAt: serverTimestamp(),
+          phoneNumber: result.user.phoneNumber || '',
+          photoURL: result.user.photoURL,
+          provider: 'google',
+          status: 'pending'
         });
-        
-        // Set the user state
+
         setUser({
           ...result.user,
-          uid: customUserId,
-          firstName,
-          lastName,
-          isGoogleUser: true
+          isPending: true
         });
-        
+
         return { isNewUser: true };
+      } else {
+        // Login flow
+        if (!existingUserData) {
+          await auth.signOut();
+          setUser(null);
+          throw new Error('No account found. Please sign up first.');
+        }
+
+        setUser({
+          ...result.user,
+          ...existingUserData
+        });
+
+        return { isNewUser: false };
       }
       
-      // For existing user login
-      const userData = userDocs.docs[0].data();
-      setUser({
-        ...result.user,
-        ...userData,
-        isGoogleUser: true
-      });
-      
-      return { isNewUser: false };
-      
     } catch (error) {
-      // Make sure to sign out on error
       if (auth.currentUser) {
         await auth.signOut();
       }
@@ -167,35 +242,39 @@ const AuthProvider = ({ children }) => {
     }
   };
 
-  const updateProfile = async (updates, photoFile = null) => {
-    if (!user) throw new Error('No authenticated user');
+  const updateProfile = async (updates) => {
+    if (!auth.currentUser) throw new Error('No authenticated user');
 
     try {
-      // Handle photo upload if provided
-      if (photoFile) {
-        const storageRef = ref(storage, `profile-photos/${auth.currentUser.uid}`);
-        await uploadBytes(storageRef, photoFile);
-        updates.photoURL = await getDownloadURL(storageRef);
-      }
-
-      // Update Firebase Auth profile if there's a photoURL update
-      if (updates.photoURL) {
+      // If updating Firebase auth profile properties
+      if (updates.displayName || updates.photoURL) {
         await updateFirebaseProfile(auth.currentUser, {
+          displayName: updates.displayName,
           photoURL: updates.photoURL
         });
       }
 
-      // Update Firestore document
-      const userDocs = await getDocs(
-        query(collection(db, 'users'), 
-        where('authUid', '==', auth.currentUser.uid))
-      );
+      // Handle profile type updates
+      if (updates.profileType) {
+        // Update local state immediately
+        setUser(prev => ({
+          ...prev,
+          ...updates,
+          isPending: false
+        }));
+        return true;
+      }
 
-      if (!userDocs.empty) {
-        const userDoc = userDocs.docs[0];
-        await updateDoc(doc(db, 'users', userDoc.id), updates);
+      // For other profile updates...
+      const profileType = user?.profileType;
+      if (profileType) {
+        const userRef = doc(db, profileType, auth.currentUser.uid);
+        await updateDoc(userRef, {
+          ...updates,
+          updatedAt: serverTimestamp()
+        });
 
-        // Update local user state
+        // Update local state
         setUser(prev => ({
           ...prev,
           ...updates
@@ -246,35 +325,59 @@ const AuthProvider = ({ children }) => {
     const unsubscribe = onAuthStateChanged(auth, async (authUser) => {
       if (authUser) {
         try {
-          // Get the user document using auth UID
-          const userDocs = await getDocs(
-            query(collection(db, 'users'), 
-            where('authUid', '==', authUser.uid))
-          );
-          
-          if (!userDocs.empty) {
-            const userData = userDocs.docs[0].data();
-            
-            // Check if user is Google-authenticated
-            const isGoogleUser = authUser.providerData?.[0]?.providerId === 'google.com';
-            
+          // Check pending collection first
+          const pendingDoc = await getDoc(doc(db, 'pending_users', authUser.uid));
+          if (pendingDoc.exists()) {
             setUser({
-              ...userData,
-              displayName: authUser.displayName,
-              email: authUser.email,
-              photoURL: authUser.photoURL || userData.photoURL,
-              uid: userData.uid,
-              authUid: authUser.uid,
-              isGoogleUser
+              ...authUser,
+              ...pendingDoc.data(),
+              isPending: true
             });
+            setLoading(false);
+            return;
+          }
+
+          // If not pending, check all profile type collections
+          const profileTypes = ['entrepreneur', 'student', 'jobseeker', 'company'];
+          let userData = null;
+
+          for (const profileType of profileTypes) {
+            const userDoc = await getDoc(doc(db, profileType, authUser.uid));
+            if (userDoc.exists()) {
+              const docData = userDoc.data();
+              userData = {
+                ...authUser,
+                profileType,
+                // Ensure we maintain the nested structure while also providing top-level access
+                profile: docData.profile || {},
+                settings: docData.settings || {},
+                // Add flattened fields for backward compatibility
+                firstName: docData.profile?.firstName || docData.firstName,
+                lastName: docData.profile?.lastName || docData.lastName,
+                displayName: authUser.displayName || docData.profile?.displayName || `${docData.profile?.firstName} ${docData.profile?.lastName}`,
+                phoneNumber: docData.profile?.phoneNumber || docData.phoneNumber,
+                isEmailVerified: authUser.emailVerified,
+                provider: authUser.providerData[0]?.providerId || 'email'
+              };
+              break;
+            }
+          }
+
+          if (userData) {
+            console.log('Setting user data:', userData); // Debug log
+            setUser(userData);
+          } else {
+            setUser(null);
           }
         } catch (error) {
           console.error('Error fetching user data:', error);
+          setUser(null);
         }
+        setLoading(false);
       } else {
         setUser(null);
+        setLoading(false);
       }
-      setLoading(false);
     });
 
     return () => unsubscribe();
@@ -290,7 +393,8 @@ const AuthProvider = ({ children }) => {
     updateProfile,
     updateUserPassword,
     resetPassword,
-    deleteAccount
+    deleteAccount,
+    setUser
   };
 
   return (

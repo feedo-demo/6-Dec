@@ -8,7 +8,7 @@
  * - Smooth animations
  */
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   FiInfo, FiAlertTriangle, FiLoader, FiCheck, FiX
 } from 'react-icons/fi';
@@ -24,18 +24,36 @@ const Account = () => {
   const { user, loading: authLoading, updateProfile, deleteAccount } = useAuth();
 
   const [formData, setFormData] = useState({
-    firstName: user?.firstName || '',
-    lastName: user?.lastName || '',
+    firstName: user?.profile?.firstName || user?.firstName || '',
+    lastName: user?.profile?.lastName || user?.lastName || '',
     email: user?.email || '',
-    phone: user?.phoneNumber || '',
-    phoneCode: user?.phoneCode || '+44',
-    companyName: user?.companyName || '',
-    companySize: user?.companySize || '',
-    location: user?.location || '',
-    timezone: user?.timezone || '',
-    currency: user?.currency || '',
-    receiveUpdates: user?.receiveUpdates || false
+    phone: user?.profile?.phoneNumber || user?.phoneNumber || '',
+    phoneCode: user?.profile?.phoneCode || user?.phoneCode || '+44',
+    companyName: user?.profile?.companyName || user?.companyName || '',
+    companySize: user?.profile?.companySize || user?.companySize || '',
+    location: user?.profile?.location || user?.location || '',
+    timezone: user?.profile?.timezone || user?.timezone || '',
+    currency: user?.profile?.currency || user?.currency || '',
+    receiveUpdates: user?.settings?.notifications || false
   });
+
+  useEffect(() => {
+    if (user) {
+      setFormData({
+        firstName: user?.profile?.firstName || user?.firstName || '',
+        lastName: user?.profile?.lastName || user?.lastName || '',
+        email: user?.email || '',
+        phone: user?.profile?.phoneNumber || user?.phoneNumber || '',
+        phoneCode: user?.profile?.phoneCode || user?.phoneCode || '+44',
+        companyName: user?.profile?.companyName || user?.companyName || '',
+        companySize: user?.profile?.companySize || user?.companySize || '',
+        location: user?.profile?.location || user?.location || '',
+        timezone: user?.profile?.timezone || user?.timezone || '',
+        currency: user?.profile?.currency || user?.currency || '',
+        receiveUpdates: user?.settings?.notifications || false
+      });
+    }
+  }, [user]);
 
   const [loading, setLoading] = useState(false);
   const [fieldStates, setFieldStates] = useState({});

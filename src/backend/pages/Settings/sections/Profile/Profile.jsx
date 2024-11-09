@@ -57,6 +57,19 @@ const Profile = ({ activeSection, onSectionChange }) => {
     }
   };
 
+  // Helper function to format profile type
+  const formatProfileType = (type) => {
+    if (!type) return '';
+    // Convert jobseeker to Job Seeker, etc.
+    return type
+      .split(/(?=[A-Z])|_/)
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+      .join(' ');
+  };
+
+  // Add this console.log to debug
+  console.log('User data in Profile:', user);
+
   return (
     <div className="profile-section">
       <h2 className="section-title">Profile</h2>
@@ -121,10 +134,13 @@ const Profile = ({ activeSection, onSectionChange }) => {
             <div className="profile-info">
               <h3 className="profile-name">
                 {user?.displayName || 'User'}
-                <span className="profile-status">Active</span>
+                {user?.profileType && (
+                  <span className={`profile-status ${user.profileType}`}>
+                    {formatProfileType(user.profileType)}
+                  </span>
+                )}
               </h3>
               <p className="profile-email">{user?.email}</p>
-              <p className="profile-category">{user?.profileType}</p>
               
               <div className="profile-stats">
                 <div className="stat-item">

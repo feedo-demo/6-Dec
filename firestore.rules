@@ -1,42 +1,26 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Helper function to check if user is authenticated
+    // Helper functions
     function isAuthenticated() {
       return request.auth != null;
     }
     
-    // Helper function to check if user is accessing their own data
-    function isOwner(userId) {
-      return isAuthenticated() && (
-        request.auth.uid == userId || // Check Firebase Auth UID
-        request.auth.uid == resource.data.authUid // Check stored Auth UID
-      );
+    // Allow access to profile type collections
+    match /{profileType}/{userId} {
+      allow read: if isAuthenticated() && request.auth.uid == userId;
+      allow write: if isAuthenticated() && request.auth.uid == userId;
     }
 
-    // Users collection rules
-    match /users/{userId} {
-      // Allow read if user is authenticated and the document belongs to them
-      allow read: if request.auth != null && 
-        (resource.data.authUid == request.auth.uid);
-      
-      // Allow create for new sign-ups
-      allow create: if request.auth != null && 
-        request.resource.data.authUid == request.auth.uid;
-        
-      // Allow update if user owns the document
-      allow update: if request.auth != null && 
-        resource.data.authUid == request.auth.uid;
-      
-      // Validate user document fields on write
-      allow write: if isOwner(userId) && 
-        request.resource.data.keys().hasAll(['firstName', 'lastName', 'email', 'phoneNumber', 'createdAt', 'provider', 'uid', 'authUid']);
+    // Allow access to pending users
+    match /pending_users/{userId} {
+      allow read, write, delete: if request.auth.uid == userId;
     }
 
-    // Default deny all other collections
-    match /{document=**} {
+    // Allow access to shared collections
+    match /shared/{document=**} {
       allow read: if isAuthenticated();
-      allow write: if false;
+      allow write: if isAuthenticated();
     }
   }
 } 

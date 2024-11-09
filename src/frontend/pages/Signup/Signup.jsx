@@ -143,13 +143,14 @@ const Signup = () => {
     setIsLoading(true);
     
     try {
-      // Use AuthContext signup
+      // Use AuthContext signup with displayName
       await signup(
         formData.email, 
         formData.password,
         {
-          firstName: formData.firstName,
           lastName: formData.lastName,
+          firstName: formData.firstName,
+          displayName: `${formData.firstName} ${formData.lastName}`,
           phoneNumber: `${countryCode}${formData.phoneNumber}`,
           createdAt: new Date().toISOString(),
           lastLoginAt: new Date().toISOString(),
@@ -185,6 +186,7 @@ const Signup = () => {
     setErrors({}); // Clear any previous errors
     
     try {
+      // For Google signup, the displayName comes from Google profile
       const { isNewUser } = await googleSignIn(true);
       
       if (isNewUser) {

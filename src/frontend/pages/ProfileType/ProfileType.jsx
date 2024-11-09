@@ -40,7 +40,12 @@ import {
     query,       // Query creator
     collection,  // Collection reference
     where,       // Query condition
-    getDocs      // Query executor
+    getDocs,     // Query executor
+    setDoc,      // Document setter
+    writeBatch,  // Batch writer
+    serverTimestamp, // Server timestamp
+    getDoc,
+    deleteDoc,
 } from 'firebase/firestore';
 
 // Add AuthContext and update profile type
@@ -50,7 +55,8 @@ const ProfileType = () => {
   // Navigation hook for routing
   const navigate = useNavigate();
 
-  const { user, updateProfile } = useAuth();
+  // Fix: Destructure setUser from useAuth
+  const { user, updateProfile, setUser } = useAuth();  // Add setUser here
 
   // State management
   const [selectedType, setSelectedType] = useState(null);  // Selected profile type
@@ -97,7 +103,62 @@ const ProfileType = () => {
     if (selectedType) {
       setIsLoading(true);
       try {
+        const pendingUserRef = doc(db, 'pending_users', user.uid);
+        const pendingUserSnap = await getDoc(pendingUserRef);
+        
+        if (!pendingUserSnap.exists()) {
+          throw new Error('Pending user data not found');
+        }
+        
+        const pendingUserData = pendingUserSnap.data();
+
+        // Create batch write
+        const batch = writeBatch(db);
+        
+        // Create the user document with proper structure and order
+        const userDocRef = doc(db, selectedType, user.uid);
+        
+        // Create an ordered profile object
+        const userData = {
+          profile: {
+            // Define fields in the exact order we want them to appear
+            authUid: user.uid,
+            createdAt: pendingUserData.createdAt || serverTimestamp(),
+            email: pendingUserData.email,
+            lastName: pendingUserData.lastName || '',  // Move lastName before firstName
+            firstName: pendingUserData.firstName || '', // firstName will appear after lastName
+            isEmailVerified: pendingUserData.isEmailVerified || false,
+            lastLoginAt: serverTimestamp(),
+            phoneNumber: pendingUserData.phoneNumber || '',
+            photoURL: pendingUserData.photoURL || '',
+            provider: pendingUserData.provider || 'email'
+          },
+          // Keep these outside of profile
+          status: 'active',
+          settings: {
+            notifications: true,
+            emailPreferences: {
+              marketing: true,
+              updates: true,
+              opportunities: true
+            },
+            theme: 'light'
+          }
+        };
+
+        // Set the document with our ordered structure
+        await batch.set(userDocRef, userData, { merge: true });
+
+        // Delete pending user document
+        batch.delete(pendingUserRef);
+
+        // Commit the batch
+        await batch.commit();
+
+        // Update local user state with profile type
         await updateProfile({ profileType: selectedType });
+
+        // Navigate to dashboard
         navigate('/dashboard', { replace: true });
       } catch (error) {
         console.error('Error updating profile type:', error);

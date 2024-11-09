@@ -105,51 +105,26 @@ const Login = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    if (!validateForm()) {
-      return;
-    }
-    
     setIsLoading(true);
+    setErrors({});
     
     try {
       await login(formData.email, formData.password);
-      
-      // Handle remember me
-      if (rememberMe) {
-        localStorage.setItem('rememberedEmail', formData.email);
-      } else {
-        localStorage.removeItem('rememberedEmail');
-      }
-      
-      // Navigate to dashboard
       navigate('/dashboard', { replace: true });
     } catch (error) {
       console.error('Login error:', error);
+      const errorMessage = 
+        error.code === 'auth/user-not-found' ? 'No account found with this email.' :
+        error.code === 'auth/wrong-password' ? 'Incorrect password.' :
+        error.code === 'auth/user-data-not-found' ? 'Account data not found. Please try again.' :
+        error.code === 'auth/too-many-requests' ? 'Too many failed attempts. Please try again later.' :
+        'Failed to log in. Please try again.';
+      
       setErrors({
-        submit: getErrorMessage(error.code)
+        submit: errorMessage
       });
     } finally {
       setIsLoading(false);
-    }
-  };
-
-  /**
-   * Converts Firebase error codes to user-friendly messages
-   * @param {string} errorCode - The Firebase error code
-   * @returns {string} User-friendly error message
-   */
-  const getErrorMessage = (errorCode) => {
-    switch (errorCode) {
-      case 'auth/user-not-found':
-        return 'No account found with this email';
-      case 'auth/wrong-password':
-        return 'Invalid password';
-      case 'auth/too-many-requests':
-        return 'Too many failed attempts. Please try again later';
-      case 'auth/user-disabled':
-        return 'This account has been disabled';
-      default:
-        return 'Failed to login. Please try again';
     }
   };
 
