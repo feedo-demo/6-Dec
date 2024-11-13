@@ -294,3 +294,67 @@
 .content-wrapper {
   @apply w-full flex justify-center;
 }
+
+/* Save Badge */
+.save-badge {
+  @apply ml-1 px-2 py-0.5 bg-green-100 text-green-600 text-xs font-medium rounded-full;
+}
+
+/* Acknowledgment Banner */
+.acknowledgment-banner {
+  @apply fixed top-4 right-4 z-50 
+         bg-green-50 border border-green-200 
+         rounded-lg shadow-lg overflow-hidden
+         max-w-md w-full;
+  animation: slideIn 0.3s ease-out;
+}
+
+.acknowledgment-content {
+  @apply flex items-start gap-3 p-4;
+}
+
+.acknowledgment-icon {
+  @apply w-5 h-5 text-green-500 mt-0.5 flex-shrink-0;
+}
+
+.acknowledgment-text {
+  @apply flex-grow;
+}
+
+.acknowledgment-text h4 {
+  @apply text-green-800 font-medium mb-1;
+}
+
+.acknowledgment-text p {
+  @apply text-green-600 text-sm;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-1rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Price Tag Styles */
+.price-tag {
+  @apply flex items-baseline justify-center gap-1 my-8 relative;
+}
+
+/* Add specific styling for free plan */
+.price-tag .amount {
+  animation: priceChange 0.3s ease-out;
+}
+
+.price-tag .amount:not([data-price="0"]) {
+  @apply text-4xl font-bold;
+}
+
+/* Make "Free" text bigger and use gray color instead of blue */
+.price-tag .amount[data-price="0"] {
+  @apply text-5xl font-bold text-gray-800;
+}

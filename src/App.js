@@ -4,6 +4,8 @@ import { BrowserRouter as Router, Routes, Route, Navigate, Outlet } from 'react-
 import './firebase/config';
 // AuthContext import to handle authentication
 import { AuthProvider, useAuth } from './auth/AuthContext';
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 // Import components after context
 import Layout from './backend/components/Layout/Layout';
@@ -59,9 +61,10 @@ const App = () => {
       <Router>
         <div className="App">
           <Routes>
-            {/* Public routes */}
-            <Route path="/" element={<Signup />} />
+            {/* Change only this line to redirect to Login */}
+            <Route path="/" element={<Navigate to="/login" replace />} />
             <Route path="/login" element={<Login />} />
+            <Route path="/signup" element={<Signup />} />
             
             {/* Protected routes wrapped in Layout */}
             <Route element={<ProtectedLayout />}>
@@ -87,6 +90,19 @@ const App = () => {
             {/* Fallback route */}
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
+
+          {/* Add ToastContainer */}
+          <ToastContainer 
+            position="top-right"
+            autoClose={3000}
+            hideProgressBar={false}
+            newestOnTop
+            closeOnClick
+            rtl={false}
+            pauseOnFocusLoss
+            draggable
+            pauseOnHover
+          />
         </div>
       </Router>
     </AuthProvider>

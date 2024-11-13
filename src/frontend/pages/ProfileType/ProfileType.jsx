@@ -9,10 +9,10 @@
  */
 
 // React core imports
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 // Routing
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 // Icon imports from react-icons
 import { 
@@ -51,16 +51,69 @@ import {
 // Add AuthContext and update profile type
 import { useAuth } from '../../../auth/AuthContext';
 
+// Update imports
+import { userOperations, createUserDataStructure } from '../../../auth/userManager';
+
 const ProfileType = () => {
-  // Navigation hook for routing
+  const { user, updateProfile } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  const [selectedType, setSelectedType] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isInitializing, setIsInitializing] = useState(true);
 
-  // Fix: Destructure setUser from useAuth
-  const { user, updateProfile, setUser } = useAuth();  // Add setUser here
+  // Profile type selection handler
+  const handleTypeSelect = (typeId) => {
+    setSelectedType(typeId);
+  };
 
-  // State management
-  const [selectedType, setSelectedType] = useState(null);  // Selected profile type
-  const [isLoading, setIsLoading] = useState(false);      // Loading state for async operations
+  // Check user state and handle redirects
+  useEffect(() => {
+    const checkUserState = async () => {
+      console.log('ProfileType - Checking user state:', {
+        user,
+        authUser: auth.currentUser,
+        isLoading,
+        locationState: location.state
+      });
+      
+      const fromSignup = location.state?.fromSignup;
+      const userId = location.state?.userId;
+      
+      // If coming from signup and we have a userId, wait for user data
+      if (fromSignup && userId) {
+        if (!user || !auth.currentUser) {
+          console.log('Waiting for user data...');
+          // Wait briefly and check again
+          const timer = setTimeout(checkUserState, 100);
+          return () => clearTimeout(timer);
+        }
+        console.log('User data available:', user);
+      } else if (!user && !auth.currentUser && !isLoading) {
+        console.log('No user found, redirecting to login');
+        navigate('/login', { replace: true });
+        return;
+      } else if (user && !user.isPending && !isLoading) {
+        console.log('User already setup, redirecting to dashboard');
+        navigate('/dashboard', { replace: true });
+        return;
+      }
+      
+      console.log('Setting isInitializing to false');
+      setIsInitializing(false);
+    };
+
+    checkUserState();
+  }, [user, isLoading, navigate, location.state]);
+
+  // Show loading state while checking user
+  if (isInitializing) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+      </div>
+    );
+  }
 
   // Profile types configuration array
   // Defines available profile types with their properties
@@ -91,77 +144,46 @@ const ProfileType = () => {
     }
   ];
 
-  // Profile type selection handler
-  // Updates selected type state when user clicks a profile card
-  const handleTypeSelect = (typeId) => {
-    setSelectedType(typeId);
-  };
-
   // Next button handler
   // Saves selected profile type to Firestore and navigates to dashboard
   const handleNext = async () => {
     if (selectedType) {
       setIsLoading(true);
       try {
-        const pendingUserRef = doc(db, 'pending_users', user.uid);
-        const pendingUserSnap = await getDoc(pendingUserRef);
+        const { data: pendingUserData } = await userOperations.getUserData(user.uid);
         
-        if (!pendingUserSnap.exists()) {
+        if (!pendingUserData) {
           throw new Error('Pending user data not found');
         }
-        
-        const pendingUserData = pendingUserSnap.data();
 
-        // Create batch write
-        const batch = writeBatch(db);
-        
-        // Create the user document with proper structure and order
-        const userDocRef = doc(db, selectedType, user.uid);
-        
-        // Create an ordered profile object
-        const userData = {
-          profile: {
-            // Define fields in the exact order we want them to appear
-            authUid: user.uid,
-            createdAt: pendingUserData.createdAt || serverTimestamp(),
-            email: pendingUserData.email,
-            lastName: pendingUserData.lastName || '',  // Move lastName before firstName
-            firstName: pendingUserData.firstName || '', // firstName will appear after lastName
-            isEmailVerified: pendingUserData.isEmailVerified || false,
-            lastLoginAt: serverTimestamp(),
-            phoneNumber: pendingUserData.phoneNumber || '',
-            photoURL: pendingUserData.photoURL || '',
-            provider: pendingUserData.provider || 'email'
+        // Create user data structure
+        const userData = createUserDataStructure(
+          user,
+          {
+            ...pendingUserData,
+            userType: selectedType
           },
-          // Keep these outside of profile
-          status: 'active',
-          settings: {
-            notifications: true,
-            emailPreferences: {
-              marketing: true,
-              updates: true,
-              opportunities: true
-            },
-            theme: 'light'
-          }
-        };
+          selectedType
+        );
 
-        // Set the document with our ordered structure
-        await batch.set(userDocRef, userData, { merge: true });
+        console.log('Converting pending user with data:', userData); // Debug log
 
-        // Delete pending user document
-        batch.delete(pendingUserRef);
+        // Convert pending user to full user
+        await userOperations.convertPendingToUser(user.uid, userData);
 
-        // Commit the batch
-        await batch.commit();
+        console.log('Successfully converted user, updating profile...'); // Debug log
 
-        // Update local user state with profile type
-        await updateProfile({ profileType: selectedType });
+        // Update local user state
+        await updateProfile(userData);
+
+        console.log('Profile updated, navigating to dashboard...'); // Debug log
 
         // Navigate to dashboard
         navigate('/dashboard', { replace: true });
       } catch (error) {
         console.error('Error updating profile type:', error);
+        // TODO: Add error handling UI
+        // You might want to show an error message to the user here
       } finally {
         setIsLoading(false);
       }

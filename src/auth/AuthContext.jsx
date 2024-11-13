@@ -3,17 +3,18 @@
  */
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { auth, db } from '../firebase/config';
-import { onAuthStateChanged, updateProfile as updateFirebaseProfile, updatePassword, sendPasswordResetEmail } from 'firebase/auth';
-import { doc, getDoc, query, collection, where, getDocs, setDoc, updateDoc, deleteDoc, serverTimestamp } from 'firebase/firestore';
+import { auth } from '../firebase/config';
+import { onAuthStateChanged, updateProfile as updateFirebaseProfile } from 'firebase/auth';
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword, signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
-import { createCustomUserId } from '../backend/constants/profileData';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { transformUserData, userOperations, createUserDataStructure } from './userManager';
+import { doc, setDoc, getDoc } from 'firebase/firestore';
+import { db } from '../firebase/config';
+import { verifyTwoFactorCode } from './twoFactorAuth';
+import { authenticator } from 'otplib';
 
 const AuthContext = createContext();
 
-// Create the context hook
-const useAuth = () => {
+export const useAuth = () => {
   const context = useContext(AuthContext);
   if (!context) {
     throw new Error('useAuth must be used within an AuthProvider');
@@ -21,111 +22,103 @@ const useAuth = () => {
   return context;
 };
 
-// Create the provider component
-const AuthProvider = ({ children }) => {
+export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [requiresTwoFactor, setRequiresTwoFactor] = useState(false);
+  const [tempAuthCredentials, setTempAuthCredentials] = useState(null);
 
   const login = async (email, password) => {
     try {
-      // First authenticate with Firebase
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
-      const authUser = userCredential.user;
-
-      // Check profile type collections
-      const profileTypes = ['entrepreneur', 'student', 'jobseeker', 'company'];
-      let userData = null;
-
-      for (const profileType of profileTypes) {
-        const userDoc = await getDoc(doc(db, profileType, authUser.uid));
-        if (userDoc.exists()) {
-          userData = {
-            ...authUser,
-            ...userDoc.data(),  // Get all user data
-            profileType,        // Add the profile type
-            displayName: authUser.displayName || userDoc.data().displayName,
-            isEmailVerified: authUser.emailVerified,
-            provider: authUser.providerData[0]?.providerId || 'email'
-          };
-          break;
-        }
+      
+      // Get user data to check 2FA status
+      const userDoc = await getDoc(doc(db, 'users', userCredential.user.uid));
+      const userData = userDoc.data();
+      
+      // Check if user has 2FA enabled
+      if (userData?.twoFactorAuth?.enabled) {
+        // Store credentials temporarily and require 2FA
+        setTempAuthCredentials(userCredential);
+        setRequiresTwoFactor(true);
+        return { requiresTwoFactor: true };
       }
 
-      // Check if user is pending
-      if (!userData) {
-        const pendingDoc = await getDoc(doc(db, 'pending_users', authUser.uid));
-        if (pendingDoc.exists()) {
-          userData = {
-            ...authUser,
-            ...pendingDoc.data(),
-            isPending: true
-          };
-        }
-      }
-
-      // Update user state if we found data
-      if (userData) {
-        setUser(userData);
-      } else {
-        // If no user data found, sign out and throw error
-        await auth.signOut();
-        throw new Error('User data not found. Please try again.');
-      }
-
+      // If no 2FA, proceed with normal login
+      const transformedData = transformUserData(userCredential.user, userData, userData?.isPending);
+      setUser(transformedData);
       return userCredential;
     } catch (error) {
-      // If Firebase auth failed, throw the original error
-      if (error.code) {
-        throw error;
+      console.error('Login error:', error);
+      throw error;
+    }
+  };
+
+  const verifyTwoFactor = async (code) => {
+    try {
+      if (!tempAuthCredentials) {
+        throw new Error('No pending authentication');
       }
-      // For our custom errors, wrap them with a code
-      throw {
-        code: 'auth/user-data-not-found',
-        message: error.message
-      };
+
+      // Get user data
+      const userDoc = await getDoc(doc(db, 'users', tempAuthCredentials.user.uid));
+      const userData = userDoc.data();
+
+      // Verify the code using otplib
+      const isValid = authenticator.verify({
+        token: code,
+        secret: userData.twoFactorAuth.secret
+      });
+
+      if (!isValid) {
+        throw new Error('Invalid verification code');
+      }
+
+      // Complete the login process
+      const transformedData = transformUserData(
+        tempAuthCredentials.user, 
+        userData, 
+        userData?.isPending
+      );
+      
+      setUser(transformedData);
+      setRequiresTwoFactor(false);
+      setTempAuthCredentials(null);
+
+      return { success: true };
+    } catch (error) {
+      console.error('2FA verification error:', error);
+      throw error;
     }
   };
 
   const signup = async (email, password, userData) => {
     try {
-      // Create auth user
+      // Create the auth user
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-      const user = userCredential.user;
-
-      // Update the user's profile with displayName if provided
-      if (userData.displayName) {
-        await updateFirebaseProfile(user, {
-          displayName: userData.displayName
-        });
-      }
-
-      // Create pending user document in Firestore
-      const pendingUserRef = doc(db, 'pending_users', user.uid);
-      await setDoc(pendingUserRef, {
-        authUid: user.uid,
-        email: user.email,
-        firstName: userData.firstName,
-        lastName: userData.lastName,
-        displayName: userData.displayName,
-        phoneNumber: userData.phoneNumber,
-        createdAt: serverTimestamp(),
-        lastLoginAt: serverTimestamp(),
-        isEmailVerified: user.emailVerified,
-        status: 'pending',
-        provider: 'email'
+      
+      // Update Firebase profile
+      await updateFirebaseProfile(userCredential.user, {
+        displayName: userData.displayName
       });
 
-      // Update local user state
+      // Create user data structure
+      const userDataStructure = createUserDataStructure(userCredential.user, userData);
+      
+      // Create pending user document
+      await userOperations.createPendingUser(userCredential.user.uid, userDataStructure);
+      
+      // Transform and set user data
+      const transformedData = transformUserData(userCredential.user, userDataStructure, true);
       setUser({
-        ...userData,
-        uid: user.uid,
-        email: user.email,
-        displayName: userData.displayName,
-        isPending: true,
-        isGoogleUser: false
+        ...transformedData,
+        isPending: true
       });
 
-      return user;
+      return { 
+        user: userCredential.user,
+        success: true 
+      };
     } catch (error) {
       console.error('Signup error:', error);
       throw error;
@@ -137,97 +130,40 @@ const AuthProvider = ({ children }) => {
     
     try {
       const result = await signInWithPopup(auth, provider);
+      const userData = await userOperations.getUserData(result.user.uid);
+      console.log('Google Sign In - Raw Data:', { result, userData });
 
-      // For signup flow, first check pending_users
-      if (isSignUp) {
-        const pendingDoc = await getDoc(doc(db, 'pending_users', result.user.uid));
-        if (pendingDoc.exists()) {
-          // User is in the middle of signup process
-          setUser({
-            ...result.user,
-            ...pendingDoc.data(),
-            isPending: true
-          });
-          return { isNewUser: true };
-        }
-      }
-      
-      // Check if user exists in any profile type collection
-      const profileTypes = ['entrepreneur', 'student', 'jobseeker', 'company'];
-      let existingUserData = null;
-
-      for (const profileType of profileTypes) {
-        const userDoc = await getDoc(doc(db, profileType, result.user.uid));
-        if (userDoc.exists()) {
-          existingUserData = { 
-            ...userDoc.data().profile,
-            ...userDoc.data().settings,
-            profileType 
-          };
-          break;
-        }
-      }
-
-      // Handle signup vs login flows
-      if (isSignUp) {
-        if (existingUserData) {
-          // User already exists, should login instead
-          await auth.signOut();
-          setUser(null);
-          throw new Error('Account already exists. Please login instead.');
-        }
-
-        // Create new pending user
-        const pendingUserRef = doc(db, 'pending_users', result.user.uid);
-        
-        // Fix: Better name splitting logic
-        const fullName = result.user.displayName || '';
-        const nameParts = fullName.split(' ');
-        const firstName = nameParts[0] || '';
-        // Fix: Join the rest of the name parts for lastName
-        const lastName = nameParts.slice(1).join(' ') || '';
-        
-        await setDoc(pendingUserRef, {
-          authUid: result.user.uid,
-          createdAt: serverTimestamp(),
-          email: result.user.email,
-          firstName: firstName,
-          lastName: lastName,
-          isEmailVerified: result.user.emailVerified,
-          lastLoginAt: serverTimestamp(),
-          phoneNumber: result.user.phoneNumber || '',
-          photoURL: result.user.photoURL,
-          provider: 'google',
-          status: 'pending'
-        });
-
-        setUser({
-          ...result.user,
-          isPending: true
-        });
-
-        return { isNewUser: true };
-      } else {
-        // Login flow
-        if (!existingUserData) {
-          await auth.signOut();
-          setUser(null);
-          throw new Error('No account found. Please sign up first.');
-        }
-
-        setUser({
-          ...result.user,
-          ...existingUserData
-        });
-
-        return { isNewUser: false };
-      }
-      
-    } catch (error) {
-      if (auth.currentUser) {
+      if (!userData.data && !isSignUp) {
         await auth.signOut();
+        throw new Error('No account found. Please sign up first.');
       }
-      setUser(null);
+
+      if (userData.data && isSignUp) {
+        await auth.signOut();
+        throw new Error('Account already exists. Please login instead.');
+      }
+
+      if (!userData.data && isSignUp) {
+        // Create new pending user for signup
+        const userDataStructure = createUserDataStructure(result.user, {
+          firstName: result.user.displayName?.split(' ')[0] || '',
+          lastName: result.user.displayName?.split(' ').slice(1).join(' ') || '',
+          provider: 'google'
+        });
+        
+        await userOperations.createUserDocument(result.user.uid, userDataStructure, true);
+        const transformedData = transformUserData(result.user, userDataStructure, true);
+        console.log('Google Sign Up - New User Data:', transformedData);
+        setUser(transformedData);
+        return { isNewUser: true };
+      }
+
+      const transformedData = transformUserData(result.user, userData.data, userData.isPending);
+      console.log('Google Sign In - Transformed Data:', transformedData);
+      setUser(transformedData);
+      return { isNewUser: false };
+    } catch (error) {
+      if (auth.currentUser) await auth.signOut();
       throw error;
     }
   };
@@ -237,86 +173,70 @@ const AuthProvider = ({ children }) => {
       await auth.signOut();
       setUser(null);
     } catch (error) {
-      console.error('Error signing out:', error);
+      console.error('Signout error:', error);
       throw error;
     }
   };
 
   const updateProfile = async (updates) => {
-    if (!auth.currentUser) throw new Error('No authenticated user');
+    if (!user?.profile?.authUid) throw new Error('No authenticated user');
 
     try {
-      // If updating Firebase auth profile properties
-      if (updates.displayName || updates.photoURL) {
-        await updateFirebaseProfile(auth.currentUser, {
-          displayName: updates.displayName,
-          photoURL: updates.photoURL
-        });
-      }
-
-      // Handle profile type updates
-      if (updates.profileType) {
-        // Update local state immediately
-        setUser(prev => ({
-          ...prev,
-          ...updates,
-          isPending: false
+      console.log('Updating profile with:', updates);
+      
+      // Special handling for work experience updates
+      if (updates.profile?.workExperience) {
+        // Transform dates to Firestore timestamps
+        const workExperience = updates.profile.workExperience.map(exp => ({
+          ...exp,
+          // Only transform if the dates are not already Firestore timestamps
+          startDate: exp.startDate instanceof Date ? exp.startDate : new Date(exp.startDate),
+          endDate: exp.endDate ? (exp.endDate instanceof Date ? exp.endDate : new Date(exp.endDate)) : null
         }));
-        return true;
-      }
 
-      // For other profile updates...
-      const profileType = user?.profileType;
-      if (profileType) {
-        const userRef = doc(db, profileType, auth.currentUser.uid);
-        await updateDoc(userRef, {
+        updates = {
           ...updates,
-          updatedAt: serverTimestamp()
-        });
-
-        // Update local state
-        setUser(prev => ({
-          ...prev,
-          ...updates
-        }));
+          profile: {
+            ...updates.profile,
+            workExperience
+          }
+        };
       }
 
+      const updatedData = await userOperations.updateUserProfile(user.profile.authUid, updates);
+      
+      // Transform the updated data to maintain consistent structure
+      const newUserData = {
+        ...user,
+        ...updatedData,
+        profile: {
+          ...user.profile,
+          ...updatedData.profile
+        },
+        settings: {
+          ...user.settings,
+          ...updatedData.settings
+        }
+      };
+      
+      console.log('Updated user data:', newUserData);
+      setUser(newUserData);
       return true;
     } catch (error) {
-      console.error('Error updating profile:', error);
+      console.error('Update profile error:', error);
       throw error;
     }
   };
 
-  const updateUserPassword = async (newPassword) => {
-    if (!auth.currentUser) throw new Error('No authenticated user');
-    await updatePassword(auth.currentUser, newPassword);
-  };
-
-  const resetPassword = async (email) => {
-    await sendPasswordResetEmail(auth, email);
-  };
-
   const deleteAccount = async () => {
-    if (!user) throw new Error('No authenticated user');
+    if (!user?.profile?.authUid) throw new Error('No authenticated user');
 
     try {
-      // Get user document
-      const userDocs = await getDocs(
-        query(collection(db, 'users'), 
-        where('authUid', '==', auth.currentUser.uid))
-      );
-
-      if (!userDocs.empty) {
-        // Delete user document
-        await deleteDoc(doc(db, 'users', userDocs.docs[0].id));
-      }
-
-      // Delete Firebase auth user
+      await userOperations.deleteUserData(user.profile.authUid);
       await auth.currentUser.delete();
       setUser(null);
     } catch (error) {
-      console.error('Error deleting account:', error);
+      console.error('Delete account error:', error);
       throw error;
     }
   };
@@ -325,59 +245,33 @@ const AuthProvider = ({ children }) => {
     const unsubscribe = onAuthStateChanged(auth, async (authUser) => {
       if (authUser) {
         try {
-          // Check pending collection first
-          const pendingDoc = await getDoc(doc(db, 'pending_users', authUser.uid));
-          if (pendingDoc.exists()) {
+          const { data, isPending } = await userOperations.getUserData(authUser.uid);
+          console.log('Auth State Changed - Raw Data:', { 
+            authUser: JSON.parse(JSON.stringify(authUser)), 
+            data: JSON.parse(JSON.stringify(data)), 
+            isPending 
+          });
+
+          if (data) {
+            const userData = transformUserData(authUser, data, isPending);
+            console.log('Transformed User Data:', userData);
             setUser({
-              ...authUser,
-              ...pendingDoc.data(),
-              isPending: true
+              ...userData,
+              isPending // Ensure isPending is set correctly
             });
-            setLoading(false);
-            return;
-          }
-
-          // If not pending, check all profile type collections
-          const profileTypes = ['entrepreneur', 'student', 'jobseeker', 'company'];
-          let userData = null;
-
-          for (const profileType of profileTypes) {
-            const userDoc = await getDoc(doc(db, profileType, authUser.uid));
-            if (userDoc.exists()) {
-              const docData = userDoc.data();
-              userData = {
-                ...authUser,
-                profileType,
-                // Ensure we maintain the nested structure while also providing top-level access
-                profile: docData.profile || {},
-                settings: docData.settings || {},
-                // Add flattened fields for backward compatibility
-                firstName: docData.profile?.firstName || docData.firstName,
-                lastName: docData.profile?.lastName || docData.lastName,
-                displayName: authUser.displayName || docData.profile?.displayName || `${docData.profile?.firstName} ${docData.profile?.lastName}`,
-                phoneNumber: docData.profile?.phoneNumber || docData.phoneNumber,
-                isEmailVerified: authUser.emailVerified,
-                provider: authUser.providerData[0]?.providerId || 'email'
-              };
-              break;
-            }
-          }
-
-          if (userData) {
-            console.log('Setting user data:', userData); // Debug log
-            setUser(userData);
           } else {
+            console.log('No user data found, setting user to null');
             setUser(null);
           }
         } catch (error) {
-          console.error('Error fetching user data:', error);
+          console.error('Auth state change error:', error);
           setUser(null);
         }
-        setLoading(false);
       } else {
+        console.log('No auth user, setting user to null');
         setUser(null);
-        setLoading(false);
       }
+      setLoading(false);
     });
 
     return () => unsubscribe();
@@ -391,10 +285,10 @@ const AuthProvider = ({ children }) => {
     googleSignIn,
     signOut,
     updateProfile,
-    updateUserPassword,
-    resetPassword,
     deleteAccount,
-    setUser
+    setUser,
+    requiresTwoFactor,
+    verifyTwoFactor
   };
 
   return (
@@ -402,7 +296,4 @@ const AuthProvider = ({ children }) => {
       {!loading && children}
     </AuthContext.Provider>
   );
-};
-
-// Single export statement for both the hook and provider
-export { useAuth, AuthProvider }; 
+}; 

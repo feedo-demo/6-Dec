@@ -2,44 +2,42 @@
  * DataSubmission Component
  * 
  * A comprehensive data submission tracking interface that provides:
- * - User profile information display
- * - Progress circle with animated fill
- * - Submission items list with status
- * - Interactive hover states
- * - Loading states
+ * - Real-time progress tracking for each data section
+ * - Dynamic status updates based on form completion
+ * - Visual progress indicators
+ * - Interactive submission items
  * 
  * Features:
- * - AuthContext integration
- * - Progress visualization
- * - Status tracking
- * - Animated transitions
- * - Responsive design
+ * - Integration with DataManagement tabs
+ * - Real-time progress calculation
+ * - Status tracking per section
+ * - Visual feedback
  */
 
 import React, { useState, useEffect } from 'react';
 import { FiAlertCircle, FiCheckCircle, FiChevronRight } from 'react-icons/fi';
 import './DataSubmission.css';
 import { FALLBACK_PROFILE_IMAGE, getEmojiAvatar } from '../../../../constants/profileData';
-import { useAuth } from '../../../../../auth/AuthContext';  // Import useAuth
+import { useAuth } from '../../../../../auth/AuthContext';
 
 const DataSubmission = () => {
-  // Use AuthContext instead of direct Firebase auth
   const { user, loading: authLoading } = useAuth();
-  const [progress] = useState(75);
-
-  const submissionItems = [
+  const [progress, setProgress] = useState(0);
+  const [submissionItems, setSubmissionItems] = useState([
     {
       id: 1,
       type: 'Personal Data',
       status: 'incomplete',
       label: 'Complete Now',
       isNew: false,
+      requiredFields: ['fullName', 'email', 'phoneNumber', 'location', 'professionalSummary']
     },
     {
       id: 2,
       type: 'Education Data',
-      status: 'complete',
-      label: 'Completed',
+      status: 'incomplete',
+      label: 'Complete Now',
+      requiredFields: ['degreeLevel', 'fieldOfStudy', 'institutionName', 'graduationDate']
     },
     {
       id: 3,
@@ -47,19 +45,111 @@ const DataSubmission = () => {
       status: 'incomplete',
       label: 'Complete Now',
       isNew: true,
+      requiredFields: ['companyName', 'jobTitle', 'startDate', 'responsibilities']
     },
     {
       id: 4,
-      type: 'Skills & Certifications',
+      type: 'Verification',
       status: 'incomplete',
       label: 'Complete Now',
       isNew: false,
+      requiredFields: ['verificationCode', 'termsAccepted']
     }
-  ];
+  ]);
 
+  // Calculate completion status for each section
+  useEffect(() => {
+    if (user) {
+      const updatedItems = submissionItems.map(item => {
+        let isComplete = false;
+
+        switch (item.type) {
+          case 'Personal Data':
+            isComplete = checkPersonalDataCompletion();
+            break;
+          case 'Education Data':
+            isComplete = checkEducationDataCompletion();
+            break;
+          case 'Work Experience':
+            isComplete = checkWorkExperienceCompletion();
+            break;
+          case 'Verification':
+            isComplete = checkVerificationCompletion();
+            break;
+          default:
+            break;
+        }
+
+        return {
+          ...item,
+          status: isComplete ? 'complete' : 'incomplete',
+          label: isComplete ? 'Completed' : 'Complete Now'
+        };
+      });
+
+      setSubmissionItems(updatedItems);
+
+      // Calculate overall progress
+      const completedSections = updatedItems.filter(item => item.status === 'complete').length;
+      const totalSections = updatedItems.length;
+      const calculatedProgress = Math.round((completedSections / totalSections) * 100);
+      setProgress(calculatedProgress);
+    }
+  }, [user]);
+
+  // Check completion status for each section
+  const checkPersonalDataCompletion = () => {
+    if (!user?.profile) return false;
+    
+    const requiredFields = ['firstName', 'lastName', 'email', 'phoneNumber', 'location', 'professionalSummary'];
+    return requiredFields.every(field => {
+      const value = user.profile[field];
+      return value && value.toString().trim() !== '';
+    });
+  };
+
+  const checkEducationDataCompletion = () => {
+    if (!user?.education) return false;
+    
+    const requiredFields = ['degreeLevel', 'fieldOfStudy', 'institutionName', 'graduationDate'];
+    return requiredFields.every(field => {
+      const value = user.education[field];
+      return value && value.toString().trim() !== '';
+    });
+  };
+
+  const checkWorkExperienceCompletion = () => {
+    if (!user?.workExperience || !user.workExperience.length) return false;
+    
+    const requiredFields = ['companyName', 'jobTitle', 'startDate', 'responsibilities'];
+    return user.workExperience.some(exp => 
+      requiredFields.every(field => {
+        const value = exp[field];
+        return value && value.toString().trim() !== '';
+      })
+    );
+  };
+
+  const checkVerificationCompletion = () => {
+    return user?.verification?.isVerified === true;
+  };
+
+  // Updated formatProfileType function to include color styling
   const formatProfileType = (type) => {
     if (!type) return '';
-    return type.charAt(0).toUpperCase() + type.slice(1);
+    
+    // Convert jobseeker to Job Seeker, etc.
+    const formattedType = type
+      .split(/(?=[A-Z])|_/)
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+      .join(' ');
+
+    // Return with color styling
+    return (
+      <span className={`profile-status ${type.toLowerCase()}`}>
+        {formattedType}
+      </span>
+    );
   };
 
   const ProgressCircle = ({ progress }) => {
@@ -109,6 +199,27 @@ const DataSubmission = () => {
     );
   };
 
+  const getProfileImage = () => {
+    if (authLoading) return FALLBACK_PROFILE_IMAGE;
+    
+    // For Google users
+    if (user?.profile?.provider === 'google' && user?.profile?.photoURL) {
+      return user.profile.photoURL;
+    }
+    
+    // For users with custom uploaded photos
+    if (user?.profile?.photoURL) {
+      return user.profile.photoURL;
+    }
+    
+    // Fallback to emoji avatar if we have authUid
+    if (user?.profile?.authUid) {
+      return getEmojiAvatar(user.profile.authUid);
+    }
+    
+    return FALLBACK_PROFILE_IMAGE;
+  };
+
   if (authLoading) {
     return (
       <div className="data-submission-container">
@@ -138,13 +249,16 @@ const DataSubmission = () => {
             <div className="user-avatar-container">
               <ProgressCircle progress={progress} />
               <img
-                src={user.isGoogleUser ? user.photoURL : 
-                     (user.photoURL || (user?.uid ? getEmojiAvatar(user.uid) : FALLBACK_PROFILE_IMAGE))}
+                src={getProfileImage()}
                 alt="Profile"
                 className="user-avatar"
                 onError={(e) => {
-                  if (!user.isGoogleUser) {
-                    e.target.src = user?.uid ? getEmojiAvatar(user.uid) : FALLBACK_PROFILE_IMAGE;
+                  if (user?.profile?.provider !== 'google') {
+                    e.target.src = user?.profile?.authUid ? 
+                      getEmojiAvatar(user.profile.authUid) : 
+                      FALLBACK_PROFILE_IMAGE;
+                  } else {
+                    e.target.src = FALLBACK_PROFILE_IMAGE;
                   }
                 }}
               />
@@ -152,8 +266,15 @@ const DataSubmission = () => {
           </div>
         )}
         <div className="company-info">
-          <h3 className="company-name">{user?.displayName || 'User'}</h3>
-          <p className="company-category">{formatProfileType(user?.profileType)}</p>
+          <h3 className="company-name">
+            {user?.profile?.firstName ? 
+              `${user.profile.firstName} ${user.profile.lastName || ''}` : 
+              'User'
+            }
+          </h3>
+          <p className="company-category">
+            {formatProfileType(user?.profile?.userType)}
+          </p>
         </div>
       </div>
 

@@ -1,0 +1,90 @@
+/**
+ * SkeletonLoading Component Styles
+ * 
+ * Features:
+ * - Animated loading states
+ * - Shimmer effect
+ * - Matches TwoStep layout
+ */
+
+.skeleton-container {
+  @apply w-full animate-pulse space-y-6;
+}
+
+/* Title Skeleton */
+.skeleton-title {
+  @apply h-7 w-48 bg-gray-200 rounded-lg;
+}
+
+/* Security Status Skeleton */
+.skeleton-security-status {
+  @apply flex items-center gap-4 p-4 bg-gray-50 rounded-lg;
+}
+
+.skeleton-icon {
+  @apply w-10 h-10 bg-gray-200 rounded-full;
+}
+
+.skeleton-info {
+  @apply flex-1 space-y-2;
+}
+
+.skeleton-title-text {
+  @apply h-5 w-48 bg-gray-200 rounded-lg;
+}
+
+.skeleton-description {
+  @apply h-4 w-full max-w-md bg-gray-200 rounded-lg;
+}
+
+.skeleton-toggle {
+  @apply w-12 h-6 bg-gray-200 rounded-full;
+}
+
+/* Authentication Options Skeleton */
+.skeleton-auth-option {
+  @apply flex items-start gap-4 p-4 border border-gray-200 rounded-lg mt-6;
+}
+
+.skeleton-button {
+  @apply h-9 w-32 bg-gray-200 rounded-lg mt-3;
+}
+
+/* Shimmer Animation */
+@keyframes shimmer {
+  0% {
+    background-position: -468px 0;
+  }
+  100% {
+    background-position: 468px 0;
+  }
+}
+
+.skeleton-container [class*="skeleton-"] {
+  background: #f6f7f8;
+  background-image: linear-gradient(
+    to right,
+    #f6f7f8 0%,
+    #edeef1 20%,
+    #f6f7f8 40%,
+    #f6f7f8 100%
+  );
+  background-repeat: no-repeat;
+  background-size: 800px 104px;
+  animation: shimmer 1.5s infinite linear;
+}
+
+/* Responsive Design */
+@media (max-width: 640px) {
+  .skeleton-security-status {
+    @apply flex-col text-center;
+  }
+  
+  .skeleton-auth-option {
+    @apply flex-col items-center text-center;
+  }
+  
+  .skeleton-info {
+    @apply items-center;
+  }
+} 

@@ -25,7 +25,7 @@
 
 /* Activity Header */
 .activity-header {
-  @apply mb-3;  /* Bottom margin for spacing */
+  @apply flex items-center justify-between mb-3;
 }
 
 /* Activity Title */
@@ -61,14 +61,14 @@
   @apply w-4 h-4;  /* Icon size */
 }
 
-/* Activity Content Container */
+/* Activity Content Container - Updated */
 .activity-content {
-  @apply flex-1 flex items-center justify-between gap-2;  /* Content layout */
+  @apply flex-1 flex items-center justify-between gap-4;  /* Added gap between description and button */
 }
 
-/* Activity Main Text */
+/* Activity Main Text - Updated */
 .activity-main {
-  @apply flex gap-2 text-sm;  /* Text layout */
+  @apply flex gap-2 text-sm flex-1 items-center;  /* Added items-center */
 }
 
 /* Activity Type Label */
@@ -83,18 +83,19 @@
 
 /* Activity Date */
 .activity-date {
-  @apply text-sm text-gray-400;  /* Date text styling */
+  display: none;
 }
 
 /* View All Button */
-.view-all-btn {
-  @apply px-3 py-1.5 rounded-lg text-blue-600 text-sm font-medium 
-         transition-all duration-300 hover:bg-blue-50;  /* Button styling */
+.view-all-button {
+  @apply flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-blue-600 
+         hover:text-blue-700 transition-all duration-300 rounded-lg
+         hover:bg-blue-50;
 }
 
-/* View All Button Hover Effect */
-.view-all-btn:hover {
-  @apply bg-blue-100 transform scale-105;  /* Enhanced hover state */
+/* View All Button Hover Animation */
+.view-all-button:hover svg {
+  @apply transform translate-x-1;
 }
 
 /* Entrance Animation */
@@ -119,4 +120,21 @@
     opacity: 1;
     transform: translateY(0);
   }
-} 
+}
+
+/* Activity Actions Container */
+.activity-actions {
+  @apply flex items-center gap-4;  /* Space between date and button */
+}
+
+/* Activity View Button - Updated */
+.activity-view-btn {
+  @apply flex items-center gap-1 px-3 py-1.5 text-sm font-medium 
+         text-blue-600 hover:text-blue-700 transition-all duration-300 
+         rounded-lg hover:bg-blue-50 whitespace-nowrap;  /* Added whitespace-nowrap */
+}
+
+/* Button Icon Animation */
+.activity-view-btn:hover svg {
+  @apply transform translate-x-1;
+}

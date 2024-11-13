@@ -1,0 +1,29 @@
+/**
+ * LoadingSpinner Component Styles
+ * 
+ * Features:
+ * - Smooth rotation animation
+ * - Flexible container layout
+ * - Text styling
+ */
+
+.loading-spinner-container {
+  @apply flex items-center justify-center gap-2;
+}
+
+.loading-spinner {
+  animation: spin 1s linear infinite;
+}
+
+.loading-text {
+  @apply text-sm text-gray-600;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+} 

@@ -131,4 +131,58 @@
 /* Add a subtle scale animation on click */
 .toggle-button:active {
   transform: scale(0.95);
+}
+
+/* QR Code Modal */
+.qr-code-modal {
+  @apply fixed inset-0 bg-black/50 flex items-center justify-center z-50;
+  backdrop-filter: blur(4px);
+}
+
+.qr-code-content {
+  @apply bg-white rounded-xl p-8 max-w-md w-full mx-4 relative;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+}
+
+.close-modal-btn {
+  @apply absolute right-4 top-4 p-2 text-gray-400 
+         hover:text-gray-600 rounded-full
+         hover:bg-gray-100 transition-all duration-200;
+}
+
+.qr-code-steps {
+  @apply space-y-6 mt-6;
+}
+
+.qr-code-steps p {
+  @apply text-gray-600;
+}
+
+.qr-code-container {
+  @apply flex justify-center p-6 bg-white rounded-lg border border-gray-200;
+}
+
+.verification-input {
+  @apply space-y-2;
+}
+
+.verification-input input {
+  @apply w-full px-4 py-2 border border-gray-200 rounded-lg
+         focus:ring-2 focus:ring-blue-500 focus:border-transparent
+         transition-all duration-300 text-center text-2xl tracking-wider;
+}
+
+.error-message {
+  @apply text-red-500 text-sm block;
+}
+
+.verify-btn {
+  @apply w-full px-4 py-2 bg-blue-500 text-white rounded-lg
+         font-medium transition-all duration-200
+         hover:bg-blue-600 disabled:opacity-50
+         disabled:cursor-not-allowed;
+}
+
+.verify-btn:disabled:hover {
+  @apply bg-blue-500;
 } 

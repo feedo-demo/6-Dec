@@ -53,6 +53,36 @@
   display: flex;
   min-height: 100vh;
   background-color: #fff;
+  position: relative;
+}
+
+.loading-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.8);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  backdrop-filter: blur(2px);
+}
+
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid rgba(0, 147, 233, 0.2);
+  border-top-color: #0093E9;
+  border-radius: 50%;
+  animation: loading-spinner 0.8s linear infinite;
+}
+
+@keyframes loading-spinner {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 /* Left Side */
@@ -414,6 +444,12 @@ input[type="tel"]:focus {
   display: flex;
   gap: 0.5rem;
   width: 100%;
+  margin-bottom: 0.25rem;
+  align-items: stretch;
+}
+
+.phone-input input[type="tel"] {
+  flex: 1 1 auto;
 }
 
 .country-code {
@@ -421,26 +457,53 @@ input[type="tel"]:focus {
   border: 1px solid #ddd;
   border-radius: 8px;
   background: white;
-  min-width: 120px;
+  width: 100px;
+  flex: 0 0 100px;
   cursor: pointer;
   color: #333;
   appearance: none;
   background-image: url("data:image/svg+xml,%3Csvg width='10' height='6' viewBox='0 0 10 6' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1L5 5L9 1' stroke='%23666666' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
-  background-position: right 0.8rem center;
-  padding-right: 2.5rem;
+  background-position: right 0.5rem center;
+  padding-right: 1.5rem;
   transition: all 0.2s ease-in-out;
+  font-size: 0.9rem;
 }
 
-.country-code:hover {
-  border-color: #0093E9;
-  box-shadow: 0 0 0 2px rgba(0, 147, 233, 0.1);
+.phone-input input[type="tel"] {
+  flex: 1;
+  padding: 0.8rem;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 1rem;
 }
 
-.country-code:focus {
+.phone-input input[type="tel"]:focus {
   outline: none;
   border-color: #0093E9;
   box-shadow: 0 0 0 3px rgba(0, 147, 233, 0.2);
+}
+
+.phone-input input[type="tel"].error {
+  border-color: #ff4d4f;
+}
+
+.phone-input .country-code:focus {
+  outline: none;
+  border-color: #0093E9;
+  box-shadow: 0 0 0 3px rgba(0, 147, 233, 0.2);
+}
+
+/* Add hover effects */
+.phone-input input[type="tel"]:hover,
+.phone-input .country-code:hover {
+  border-color: #0093E9;
+}
+
+/* Error state */
+.phone-input.error input[type="tel"],
+.phone-input.error .country-code {
+  border-color: #ff4d4f;
 }
 
 /* Password Input */
@@ -488,14 +551,12 @@ input[type="password"] {
   transition: all 0.3s ease;
   position: relative;
   overflow: hidden;
-  display: flex;
-  align-items: center;
-  justify-content: center;
 }
 
+/* Loading state styles */
 .create-account-btn.loading {
-  position: relative;
-  color: transparent;
+  color: transparent !important;
+  pointer-events: none;
 }
 
 .create-account-btn.loading::after {
@@ -503,22 +564,25 @@ input[type="password"] {
   position: absolute;
   top: 50%;
   left: 50%;
-  width: 20px;
-  height: 20px;
-  margin: -10px 0 0 -10px;
-  border: 3px solid rgba(255, 255, 255, 0.3);
+  width: 24px;
+  height: 24px;
+  margin: -12px 0 0 -12px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
   border-top-color: white;
   border-radius: 50%;
   animation: button-loading-spinner 0.8s linear infinite;
 }
 
 @keyframes button-loading-spinner {
-  from {
-    transform: rotate(0turn);
-  }
-  to {
-    transform: rotate(1turn);
-  }
+  from { transform: rotate(0turn); }
+  to { transform: rotate(1turn); }
+}
+
+/* Disabled state */
+.create-account-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  pointer-events: none;
 }
 
 .create-account-btn:hover {
@@ -558,6 +622,10 @@ input[type="password"] {
   transform: none;
   cursor: not-allowed;
   box-shadow: none;
+}
+
+.create-account-btn:disabled:not(.loading) {
+  color: rgba(255, 255, 255, 0.7);
 }
 
 .create-account-btn:disabled::before {
@@ -823,4 +891,67 @@ input[type="password"] {
   0% { opacity: 0.7; }
   50% { opacity: 0.5; }
   100% { opacity: 0.7; }
+}
+
+/* Update the loading spinner styles to ensure visibility */
+.create-account-btn.loading {
+  color: transparent !important;
+  position: relative;
+  cursor: not-allowed;
+}
+
+.create-account-btn.loading::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 20px;
+  height: 20px;
+  margin: -10px 0 0 -10px;
+  border: 3px solid rgba(255, 255, 255, 0.3);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: button-loading-spinner 0.8s linear infinite;
+  z-index: 2;
+}
+
+/* Ensure the loading spinner animation is defined */
+@keyframes button-loading-spinner {
+  from { transform: rotate(0turn); }
+  to { transform: rotate(1turn); }
+}
+
+/* Add these styles to handle the gradient overlay during loading */
+.create-account-btn.loading::before {
+  opacity: 0.7;
+}
+
+/* Ensure disabled state is properly styled */
+.create-account-btn:disabled {
+  opacity: 0.8;
+  cursor: not-allowed;
+}
+
+.create-account-btn .loading-text {
+  visibility: hidden;
+}
+
+.create-account-btn.loading {
+  position: relative;
+  cursor: not-allowed;
+}
+
+.create-account-btn.loading::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 20px;
+  height: 20px;
+  margin: -10px 0 0 -10px;
+  border: 3px solid rgba(255, 255, 255, 0.3);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: button-loading-spinner 0.8s linear infinite;
+  z-index: 2;
 }

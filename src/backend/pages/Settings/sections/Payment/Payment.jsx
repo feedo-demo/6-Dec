@@ -7,14 +7,25 @@
  * - Interactive card interface
  */
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   FiCreditCard, FiDollarSign, FiClock, FiDownload, 
-  FiPlus, FiTrash2, FiCheck, FiArrowUpCircle 
+  FiPlus, FiTrash2, FiCheck
 } from 'react-icons/fi';
 import './Payment.css';
+import SavedCard from './components/SavedCard/SavedCard';
+import BillingHistory from './components/BillingHistory/BillingHistory';
+import AddCard from './components/AddCard/AddCard';
+import { stripeApi } from '../../../../api/stripe';
+import StripeProvider from '../../../../api/providers/StripeProvider';
+import { useToast } from '../../../../components/Toast/ToastContext';
+import SkeletonLoading from './components/SkeletonLoading/SkeletonLoading';
+import CardSkeleton from './components/SavedCard/CardSkeleton';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import AddCardPopup from '../../../../components/Popups/AddCardPopup/AddCardPopup';
+import { useAuth } from '../../../../../auth/AuthContext';
 
-// Card images from the web
+// Move cardImages outside component
 const cardImages = {
   visa: 'https://js.stripe.com/v3/fingerprinted/img/visa-729c05c240c4bdb47b03ac81d9945bfe.svg',
   mastercard: 'https://js.stripe.com/v3/fingerprinted/img/mastercard-4d8844094130711885b5e41b28c9848f.svg'
@@ -30,39 +41,175 @@ const acceptedCardImages = {
 };
 
 const Payment = () => {
-  const [cards, setCards] = useState([
-    {
-      id: 1,
-      type: 'visa',
-      last4: '4242',
-      expiry: '12/24',
-      isDefault: true,
-      cardHolder: 'Mohamed Kilany'
-    },
-    {
-      id: 2,
-      type: 'mastercard',
-      last4: '5555',
-      expiry: '09/25',
-      isDefault: false,
-      cardHolder: 'Mohamed Kilany'
+  const [cards, setCards] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [billingHistory, setBillingHistory] = useState([]);
+  const [customerId, setCustomerId] = useState(null);
+  const toast = useToast();
+  const navigate = useNavigate();
+  const [showAddCardPopup, setShowAddCardPopup] = useState(false);
+  const [searchParams] = useSearchParams();
+  const { user } = useAuth();
+
+  // Check for showAddCard parameter
+  useEffect(() => {
+    const shouldShowAddCard = searchParams.get('showAddCard') === 'true';
+    if (shouldShowAddCard) {
+      setShowAddCardPopup(true);
     }
-  ]);
+  }, [searchParams]);
 
-  const getCardImage = (type) => {
-    return cardImages[type] || cardImages.visa; // Fallback to visa if type not found
+  // Format payment method to card format
+  const formatPaymentMethod = (paymentMethod, isFirst = false) => ({
+    id: paymentMethod.id,
+    type: paymentMethod.card.brand,
+    last4: paymentMethod.card.last4,
+    expiry: `${String(paymentMethod.card.exp_month).padStart(2, '0')}/${String(paymentMethod.card.exp_year).slice(-2)}`,
+    isDefault: isFirst, // First card will be default
+    cardHolder: paymentMethod.billing_details.name || 'Card Holder'
+  });
+
+  // Fetch or create customer
+  const getOrCreateCustomer = async () => {
+    try {
+      if (!user) {
+        throw new Error('No authenticated user found');
+      }
+
+      const customer = await stripeApi.getOrCreateCustomer(user.uid, user.email);
+      return customer.id;
+    } catch (err) {
+      console.error('Error getting/creating customer:', err);
+      throw new Error('Failed to initialize customer');
+    }
   };
 
-  const handleSetDefault = (cardId) => {
-    setCards(cards.map(card => ({
-      ...card,
-      isDefault: card.id === cardId
-    })));
+  // Fetch payment methods
+  const fetchPaymentMethods = async (custId) => {
+    try {
+      console.log('Fetching payment methods for customer:', custId);
+      const paymentMethods = await stripeApi.listPaymentMethods(custId);
+      console.log('Payment methods received:', paymentMethods);
+      
+      // Format cards and set first one as default
+      const formattedCards = paymentMethods.map((pm, index) => 
+        formatPaymentMethod(pm, index === 0)
+      );
+
+      // If we have cards, set the first one as default in Stripe
+      if (formattedCards.length > 0) {
+        await stripeApi.setDefaultPaymentMethod(custId, formattedCards[0].id)
+          .catch(err => console.error('Error setting initial default card:', err));
+      }
+
+      setCards(formattedCards);
+    } catch (err) {
+      console.error('Error fetching payment methods:', err);
+      throw new Error('Failed to load payment methods');
+    }
   };
 
-  const handleDeleteCard = (cardId) => {
-    setCards(cards.filter(card => card.id !== cardId));
+  // Fetch billing history from Stripe
+  const fetchBillingHistory = async (custId) => {
+    try {
+      // Get invoices from Stripe
+      const invoices = await stripeApi.listInvoices(custId);
+      
+      // Format invoices for our UI
+      const formattedInvoices = invoices.map(invoice => ({
+        id: invoice.id,
+        date: new Date(invoice.created * 1000).toISOString(),
+        number: invoice.number,
+        amount: invoice.amount_paid / 100, // Convert from cents to dollars
+        status: invoice.status === 'paid' ? 'Paid' : invoice.status,
+        invoice_pdf: invoice.invoice_pdf
+      }));
+
+      setBillingHistory(formattedInvoices);
+    } catch (error) {
+      console.error('Error fetching billing history:', error);
+      toast.showError('Failed to load billing history');
+    }
   };
+
+  // Initial data fetch
+  useEffect(() => {
+    const initializePaymentData = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+
+        // Get or create customer first
+        const custId = await getOrCreateCustomer();
+        setCustomerId(custId);
+        console.log('Customer ID:', custId);
+
+        // Then fetch payment methods
+        await fetchPaymentMethods(custId);
+        
+        // Fetch billing history
+        await fetchBillingHistory(custId);
+      } catch (err) {
+        console.error('Error initializing payment data:', err);
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    initializePaymentData();
+  }, []);
+
+  const handleSetDefault = async (cardId) => {
+    try {
+      await stripeApi.setDefaultPaymentMethod(customerId, cardId);
+      setCards(cards.map(card => ({
+        ...card,
+        isDefault: card.id === cardId
+      })));
+      toast.showSuccess('Default payment method updated');
+    } catch (err) {
+      console.error('Error setting default card:', err);
+      toast.showError('Failed to set default payment method');
+    }
+  };
+
+  const handleDeleteCard = async (cardId) => {
+    try {
+      await stripeApi.deletePaymentMethod(cardId);
+      setCards(cards.filter(card => card.id !== cardId));
+      toast.showSuccess('Card deleted successfully');
+    } catch (err) {
+      console.error('Error deleting card:', err);
+      toast.showError('Failed to delete card');
+    }
+  };
+
+  const handleAddCard = async (paymentMethodId) => {
+    try {
+      await stripeApi.addPaymentMethod(customerId, paymentMethodId);
+      await fetchPaymentMethods(customerId);
+      toast.showSuccess('Card added successfully');
+    } catch (err) {
+      console.error('Error adding card:', err);
+      toast.showError('Failed to add card');
+      throw err;
+    }
+  };
+
+  const handleUpgradeClick = () => {
+    navigate('/subscription');
+  };
+
+  if (error) {
+    return (
+      <div className="p-4 bg-red-50 text-red-600 rounded-lg">
+        <h3 className="font-semibold">Error</h3>
+        <p>{error}</p>
+      </div>
+    );
+  }
 
   return (
     <div className="payment-section">
@@ -77,114 +224,49 @@ const Payment = () => {
               Manage your payment methods and view billing history
             </p>
           </div>
-          <button className="upgrade-plan-btn">
-            <FiArrowUpCircle className="upgrade-icon" />
-            <span>Upgrade Plan</span>
+          <button 
+            className="upgrade-plan-btn"
+            onClick={() => setShowAddCardPopup(true)}
+          >
+            <FiPlus className="upgrade-icon" />
+            <span>Add New Card</span>
           </button>
         </div>
       </div>
 
-      {/* Payment Methods */}
-      <div className="payment-methods">
-        <div className="cards-list">
-          {cards.map((card) => (
-            <div 
-              key={card.id} 
-              className={`payment-card ${card.isDefault ? 'active' : ''}`}
-            >
-              <div className="card-header">
-                <div className="card-brand-container">
-                  <img 
-                    src={getCardImage(card.type)} 
-                    alt={`${card.type} card`}
-                    className="card-brand-image"
-                  />
-                </div>
-              </div>
-              
-              <div className="card-body">
-                <div className="card-number">
-                  •••• •••• •••• {card.last4}
-                </div>
-                <div className="card-details">
-                  <div className="card-holder">{card.cardHolder}</div>
-                  <div className="card-expiry">Expires {card.expiry}</div>
-                </div>
-              </div>
-              
-              <div className="card-actions">
-                {!card.isDefault && (
-                  <button 
-                    onClick={() => handleSetDefault(card.id)}
-                    className="set-default-btn"
-                  >
-                    Set as default
-                  </button>
-                )}
-                {!card.isDefault && (
-                  <button 
-                    onClick={() => handleDeleteCard(card.id)}
-                    className="delete-card-btn"
-                  >
-                    <FiTrash2 />
-                  </button>
-                )}
-              </div>
-
-              {card.isDefault && (
-                <div className="default-badge-container">
-                  <span className="default-badge">
-                    <FiCheck className="badge-icon" />
-                    Default
-                  </span>
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
-
-        {/* Add card button */}
-        {cards.length < 3 && (
-          <div className="add-card-container">
-            <button className="add-card-btn">
-              <div className="add-card-content">
-                <FiPlus className="add-icon" />
-                <span>Add New Card</span>
-                <p className="add-card-subtitle">
-                  Securely add a new payment method
-                </p>
-              </div>
-            </button>
+      <StripeProvider>
+        {/* Payment Methods */}
+        <div className="payment-methods">
+          <div className="cards-list">
+            {loading ? (
+              <>
+                <CardSkeleton />
+                <CardSkeleton />
+              </>
+            ) : (
+              cards.map((card) => (
+                <SavedCard
+                  key={card.id}
+                  card={card}
+                  onSetDefault={handleSetDefault}
+                  onDelete={handleDeleteCard}
+                  cardImages={cardImages}
+                />
+              ))
+            )}
           </div>
-        )}
-      </div>
-
-      {/* Billing History */}
-      <div className="billing-history">
-        <h3 className="subsection-title">Billing History</h3>
-        <div className="history-list">
-          {[1, 2, 3].map((item) => (
-            <div key={item} className="history-item">
-              <div className="invoice-details">
-                <span className="invoice-date">Oct 1, 2023</span>
-                <span className="invoice-id">#INV-2023{item}</span>
-              </div>
-              <div className="invoice-amount">
-                <FiDollarSign className="amount-icon" />
-                <span>29.99</span>
-              </div>
-              <div className="invoice-status success">
-                <FiClock className="status-icon" />
-                <span>Paid</span>
-              </div>
-              <button className="download-btn">
-                <FiDownload />
-                Download
-              </button>
-            </div>
-          ))}
         </div>
-      </div>
+
+        {/* Billing History */}
+        <BillingHistory invoices={billingHistory} />
+
+        {/* Add Card Popup */}
+        <AddCardPopup 
+          isOpen={showAddCardPopup}
+          onClose={() => setShowAddCardPopup(false)}
+          onAddCard={handleAddCard}
+        />
+      </StripeProvider>
     </div>
   );
 };

@@ -13,6 +13,7 @@
 // React and core dependencies
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { doc, getDoc } from 'firebase/firestore';
 
 // Styles
 import './Login.css';
@@ -37,6 +38,13 @@ import {
 // Add AuthContext import
 import { useAuth } from '../../../auth/AuthContext';
 
+// Firebase Firestore
+import { db } from '../../../firebase/config';
+
+// Update imports
+import { userOperations } from '../../../auth/userManager';
+import TwoFactorVerification from './components/TwoFactorVerification/TwoFactorVerification';
+
 /**
  * Login Component - Handles user authentication and login functionality
  * @component
@@ -44,7 +52,7 @@ import { useAuth } from '../../../auth/AuthContext';
  */
 const Login = () => {
   // Add useAuth hook
-  const { login, googleSignIn } = useAuth();
+  const { login, googleSignIn, user, verifyTwoFactor, requiresTwoFactor } = useAuth();
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
     email: '',
@@ -56,6 +64,8 @@ const Login = () => {
   const [errors, setErrors] = useState({});
   const [error, setError] = useState('');
   const [isLoginActive, setIsLoginActive] = useState(true);
+  const [showTwoFactorInput, setShowTwoFactorInput] = useState(false);
+  const [twoFactorCode, setTwoFactorCode] = useState('');
 
   /**
    * Validates the login form fields
@@ -104,25 +114,32 @@ const Login = () => {
    */
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
     setIsLoading(true);
     setErrors({});
     
     try {
-      await login(formData.email, formData.password);
-      navigate('/dashboard', { replace: true });
+      const result = await login(formData.email, formData.password);
+      
+      if (result.requiresTwoFactor) {
+        setShowTwoFactorInput(true);
+        return;
+      }
+
+      // Normal login flow continues...
+      if (result.user && !user?.isPending) {
+        navigate('/dashboard', { replace: true });
+      } else {
+        navigate('/profile-type', { replace: true });
+      }
     } catch (error) {
       console.error('Login error:', error);
       const errorMessage = 
         error.code === 'auth/user-not-found' ? 'No account found with this email.' :
         error.code === 'auth/wrong-password' ? 'Incorrect password.' :
-        error.code === 'auth/user-data-not-found' ? 'Account data not found. Please try again.' :
         error.code === 'auth/too-many-requests' ? 'Too many failed attempts. Please try again later.' :
         'Failed to log in. Please try again.';
       
-      setErrors({
-        submit: errorMessage
-      });
+      setErrors({ submit: errorMessage });
     } finally {
       setIsLoading(false);
     }
@@ -137,14 +154,17 @@ const Login = () => {
       setIsLoading(true);
       setError('');
       
-      await googleSignIn(false); // false indicates this is a login attempt
+      const { isNewUser } = await googleSignIn(false);
       
-      // Navigate to dashboard for login
-      navigate('/dashboard', { replace: true });
+      if (isNewUser || user?.isPending) {
+        navigate('/profile-type', { replace: true });
+      } else {
+        navigate('/dashboard', { replace: true });
+      }
     } catch (error) {
       console.error("Google Sign In Error:", error);
       setErrors({
-        submit: error.message
+        submit: error.message || 'Failed to sign in with Google. Please try again.'
       });
     } finally {
       setIsLoading(false);
@@ -176,6 +196,23 @@ const Login = () => {
       setTimeout(() => {
         navigate('/signup');
       }, 300);
+    }
+  };
+
+  const handleTwoFactorSubmit = async (e) => {
+    e.preventDefault();
+    setIsLoading(true);
+    
+    try {
+      await verifyTwoFactor(twoFactorCode);
+      navigate('/dashboard', { replace: true });
+    } catch (error) {
+      console.error('2FA error:', error);
+      setErrors({
+        twoFactor: 'Invalid verification code. Please try again.'
+      });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -321,6 +358,17 @@ const Login = () => {
           </button>
         </footer>
       </div>
+
+      {/* 2FA Verification Modal */}
+      {showTwoFactorInput && (
+        <TwoFactorVerification
+          twoFactorCode={twoFactorCode}
+          setTwoFactorCode={setTwoFactorCode}
+          onSubmit={handleTwoFactorSubmit}
+          isLoading={isLoading}
+          error={errors.twoFactor}
+        />
+      )}
     </div>
   );
 };

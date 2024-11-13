@@ -1,0 +1,31 @@
+/**
+ * AddCardPopup Component Styles
+ * 
+ * Features:
+ * - Modal overlay styling
+ * - Backdrop blur effect
+ * - Centered content
+ * - Responsive design
+ */
+
+.popup-overlay {
+  @apply fixed inset-0 bg-black/50 
+         flex items-center justify-center 
+         z-50 p-4;
+  backdrop-filter: blur(4px);
+}
+
+.popup-content {
+  @apply bg-white rounded-xl w-full max-w-md 
+         overflow-hidden relative;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.2);
+}
+
+/* Override AddCard container styles when in popup */
+.popup-content .add-card-container {
+  @apply mt-0;
+}
+
+.popup-content .card-form {
+  @apply shadow-none border-0;
+} 

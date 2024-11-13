@@ -4,82 +4,93 @@
  * Purpose: Displays key statistics in an visually appealing card layout
  * 
  * Features:
- * - Responsive grid layout that adapts to different screen sizes
- * - Animated number transitions using AnimatedNumber component
- * - Interactive hover effects with scale transform
- * - Gradient backgrounds for visual appeal
- * - Trend indicators for each statistic
- * - Icon-based visual indicators
- * 
- * Props: None (currently using static data)
- * 
- * Dependencies:
- * - react-icons/fi for Feather icons
- * - AnimatedNumber component for number animations
- * - StatCards.css for styling
+ * - Real-time stats from Firestore
+ * - Animated number transitions
+ * - Interactive hover effects
+ * - Gradient backgrounds
  */
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
-    FiFileText,    // Document icon representing total number of opportunities
-    FiStar,        // Star icon representing perfect/ideal matches
-    FiTrendingUp,  // Upward trend arrow showing success rate and growth
-    FiClock        // Clock icon indicating time-sensitive or closing opportunities
+    FiFileText,    // Total opportunities
+    FiStar,        // Perfect matches
+    FiTrendingUp,  // Success rate
+    FiClock        // Closing soon
 } from 'react-icons/fi';
 import AnimatedNumber from '../../../../components/Animated/AnimatedNumber';
+import { opportunityOperations } from '../../../../../applications/applicationManager';
 import './StatCards.css';
+import { useAuth } from '../../../../../auth/AuthContext';
 
-/**
- * StatCards Component
- * @returns {JSX.Element} A grid of statistics cards
- */
-const StatCards = () => {
-  // Static data for statistics cards
-  // Each object represents a card with its properties
-  const stats = [
+const StatCards = ({ refreshTrigger = 0 }) => {
+  const { user } = useAuth();
+  const [stats, setStats] = useState({
+    total: 0,
+    perfectMatches: 0,
+    successRate: 0,
+    closingSoon: 0
+  });
+  const [loading, setLoading] = useState(true);
+
+  // Fetch stats when component mounts or refreshTrigger changes
+  useEffect(() => {
+    const fetchStats = async () => {
+      if (!user?.profile?.authUid) return;
+      
+      try {
+        setLoading(true);  // Show loading state while refreshing
+        const statsData = await opportunityOperations.getOpportunityStats(user.profile.authUid);
+        setStats(statsData);
+      } catch (error) {
+        console.error('Error fetching stats:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchStats();
+  }, [refreshTrigger, user?.profile?.authUid]);  // Add user.profile.authUid to dependencies
+
+  // Stats configuration with real data
+  const statsConfig = [
     {
       id: 1,
-      icon: FiFileText,          // Document icon for total opportunities
+      icon: FiFileText,
       title: "Total Opportunities",
-      value: 156,                // Current value to display
-      trend: "+12%",             // Trend indicator
-      bgColor: "bg-gradient-to-r from-blue-500 to-blue-600" // Tailwind gradient
+      value: stats.total,
+      trend: "+12%",
+      bgColor: "bg-gradient-to-r from-blue-500 to-blue-600"
     },
     {
       id: 2,
-      icon: FiStar,              // Star icon for perfect matches
+      icon: FiStar,
       title: "Perfect Matches",
-      value: 28,
-      trend: "+5%",
+      value: stats.perfectMatches,
+      trend: `${((stats.perfectMatches / stats.total) * 100).toFixed(1)}%`,
       bgColor: "bg-gradient-to-r from-green-500 to-green-600"
     },
     {
       id: 3,
-      icon: FiTrendingUp,        // Trending icon for success rate
+      icon: FiTrendingUp,
       title: "Success Rate",
-      value: 85,
+      value: stats.successRate,
       trend: "+3%",
       bgColor: "bg-gradient-to-r from-purple-500 to-purple-600",
-      isPercentage: true         // Flag to append % symbol
+      isPercentage: true
     },
     {
       id: 4,
-      icon: FiClock,             // Clock icon for closing opportunities
+      icon: FiClock,
       title: "Closing Soon",
-      value: 12,
-      trend: "2 days",
+      value: stats.closingSoon,
+      trend: "Next 7 days",
       bgColor: "bg-gradient-to-r from-orange-500 to-orange-600"
     }
   ];
 
   return (
-    // Responsive grid container
-    // - 1 column on mobile
-    // - 2 columns on medium screens
-    // - 4 columns on large screens
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-      {/* Map through stats array to create individual cards */}
-      {stats.map((stat) => (
+      {statsConfig.map((stat) => (
         <div
           key={stat.id}
           className={`${stat.bgColor} rounded-xl p-6 text-white transition-all duration-300 hover:scale-105`}
@@ -97,8 +108,14 @@ const StatCards = () => {
           
           {/* Animated value display */}
           <p className="text-3xl font-bold">
-            <AnimatedNumber value={stat.value} duration={2000} />
-            {stat.isPercentage && '%'} {/* Conditionally render percentage symbol */}
+            {loading ? (
+              <span className="animate-pulse">...</span>
+            ) : (
+              <>
+                <AnimatedNumber value={stat.value} duration={2000} />
+                {stat.isPercentage && '%'}
+              </>
+            )}
           </p>
         </div>
       ))}

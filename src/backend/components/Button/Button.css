@@ -1,0 +1,283 @@
+/**
+ * Button Component Styles
+ * 
+ * Comprehensive styles for Button component with multiple variants.
+ * Features:
+ * - Multiple button variants
+ * - Loading animations
+ * - Hover effects
+ * - Shine animations
+ * - Consistent styling across the application
+ */
+
+/* Base Button Styles
+-------------------------------------------------- */
+.custom-button {
+  position: relative;
+  height: 48px;
+  padding: 0 1rem;
+  border-radius: 0.5rem;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  width: 100%;
+}
+
+.custom-button.w-auto {
+  width: auto;
+  display: inline-flex;
+}
+
+/* Gradient Variants
+-------------------------------------------------- */
+/* Blue Gradient (Default) */
+.button-gradient-blue {
+  background: linear-gradient(to right, #0093E9, #80D0C7);
+  color: white;
+}
+
+.button-gradient-blue:hover:not(:disabled) {
+  box-shadow: 0 4px 12px rgba(0, 147, 233, 0.3);
+}
+
+.button-gradient-blue:disabled {
+  background: linear-gradient(to right, #93c5dd, #b3dcd7);
+  cursor: not-allowed;
+}
+
+/* Purple Gradient */
+.button-gradient-purple {
+  background: linear-gradient(to right, #8B5CF6, #D946EF);
+  color: white;
+}
+
+.button-gradient-purple:hover:not(:disabled) {
+  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+}
+
+.button-gradient-purple:disabled {
+  background: linear-gradient(to right, #C4B5FB, #ECB5F5);
+  cursor: not-allowed;
+}
+
+/* Orange Gradient */
+.button-gradient-orange {
+  background: linear-gradient(to right, #F97316, #FBBF24);
+  color: white;
+}
+
+.button-gradient-orange:hover:not(:disabled) {
+  box-shadow: 0 4px 12px rgba(249, 115, 22, 0.3);
+}
+
+.button-gradient-orange:disabled {
+  background: linear-gradient(to right, #FCC7A5, #FDE5A7);
+  cursor: not-allowed;
+}
+
+/* Upgrade Button Variant
+-------------------------------------------------- */
+.button-upgrade {
+  background-color: #EEF5FF;
+  color: #246BFD;
+  border-radius: 9999px;
+  font-size: 14px;
+  box-shadow: 0 1px 4px rgba(36, 107, 253, 0.08);
+  overflow: hidden;
+  position: relative;
+}
+
+.button-upgrade:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(36, 107, 253, 0.12);
+}
+
+.button-upgrade:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.button-upgrade:disabled {
+  background-color: #F5F8FF;
+  color: #89A7FF;
+  cursor: not-allowed;
+}
+
+/* Create Button Variant
+-------------------------------------------------- */
+.button-create {
+  background: #246BFD;
+  color: white;
+  border-radius: 9999px;
+  font-size: 14px;
+  box-shadow: 0 2px 10px rgba(36, 107, 253, 0.2);
+}
+
+.button-create:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(36, 107, 253, 0.3);
+}
+
+.button-create:active:not(:disabled) {
+  transform: translateY(0);
+  box-shadow: 0 2px 8px rgba(36, 107, 253, 0.2);
+}
+
+.button-create:disabled {
+  background: #89A7FF;
+  cursor: not-allowed;
+}
+
+/* Outline Button Variant
+-------------------------------------------------- */
+.button-outline {
+  background: transparent;
+  border: 2px solid #246BFD;
+  color: #246BFD;
+}
+
+.button-outline:hover:not(:disabled) {
+  background: #246BFD;
+  color: white;
+}
+
+.button-outline:disabled {
+  border-color: #89A7FF;
+  color: #89A7FF;
+  cursor: not-allowed;
+}
+
+/* Danger Button Variant
+-------------------------------------------------- */
+.button-danger {
+  background: linear-gradient(to right, #FF416C, #FF4B2B);
+  color: white;
+}
+
+.button-danger:hover:not(:disabled) {
+  box-shadow: 0 4px 12px rgba(255, 65, 108, 0.3);
+}
+
+.button-danger:disabled {
+  background: linear-gradient(to right, #FFB4C6, #FFB4A1);
+  cursor: not-allowed;
+}
+
+/* Success Button Variant
+-------------------------------------------------- */
+.button-success {
+  background: linear-gradient(to right, #00C853, #B4ED50);
+  color: white;
+}
+
+.button-success:hover:not(:disabled) {
+  box-shadow: 0 4px 12px rgba(0, 200, 83, 0.3);
+}
+
+.button-success:disabled {
+  background: linear-gradient(to right, #99E5B4, #E5F5C3);
+  cursor: not-allowed;
+}
+
+/* Loading State
+-------------------------------------------------- */
+.custom-button.is-loading {
+  color: transparent;
+}
+
+/* Spinner Styles
+-------------------------------------------------- */
+.spinner {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  margin: -10px 0 0 -10px;
+  border: 3px solid rgba(255, 255, 255, 0.3);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: button-loading-spinner 0.8s linear infinite;
+}
+
+/* Size variants */
+.spinner.small {
+  width: 20px;
+  height: 20px;
+}
+
+.spinner.medium {
+  width: 24px;
+  height: 24px;
+  margin: -12px 0 0 -12px;
+}
+
+.spinner.large {
+  width: 32px;
+  height: 32px;
+  margin: -16px 0 0 -16px;
+}
+
+/* Shine Effect
+-------------------------------------------------- */
+.shine-effect {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    110deg,
+    transparent 25%,
+    rgba(255, 255, 255, 0.2) 45%,
+    rgba(255, 255, 255, 0.4) 50%,
+    rgba(255, 255, 255, 0.2) 55%,
+    transparent 75%
+  );
+  transform: translateX(-100%) skewX(-15deg);
+  transition: transform 0.6s ease;
+  pointer-events: none;
+}
+
+/* Specific shine effect for upgrade button */
+.button-upgrade .shine-effect {
+  border-radius: 9999px;
+}
+
+/* Animations
+-------------------------------------------------- */
+@keyframes button-loading-spinner {
+  0% { 
+    transform: rotate(0deg);
+  }
+  100% { 
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes shine {
+  0% {
+    transform: translateX(-100%) skewX(-15deg);
+  }
+  50%, 100% {
+    transform: translateX(100%) skewX(-15deg);
+  }
+}
+
+/* Add hover trigger for shine effect */
+.button-upgrade:hover .shine-effect {
+  transform: translateX(100%) skewX(-15deg);
+}
+
+/* Update the shine effect styles */
+/* Specific shine effect for rounded buttons */
+.button-upgrade .shine-effect,
+.button-create .shine-effect {
+  border-radius: 9999px;
+}
+
+/* Add hover trigger for shine effect */
+.button-upgrade:hover .shine-effect,
+.button-create:hover .shine-effect {
+  transform: translateX(100%) skewX(-15deg);
+}

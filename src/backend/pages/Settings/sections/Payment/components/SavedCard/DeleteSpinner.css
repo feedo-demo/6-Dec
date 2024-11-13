@@ -1,0 +1,27 @@
+/**
+ * DeleteSpinner Component Styles
+ * 
+ * Features:
+ * - Matches delete button dimensions
+ * - Specific animation and color
+ */
+
+.delete-spinner-container {
+  @apply flex items-center justify-center;
+  width: 32px;
+  height: 32px;
+}
+
+.delete-spinner-icon {
+  @apply w-4 h-4 text-gray-400;
+  animation: deleteSpinnerRotate 1s linear infinite;
+}
+
+@keyframes deleteSpinnerRotate {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+} 

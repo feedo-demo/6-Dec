@@ -1,0 +1,30 @@
+/**
+ * SetDefaultSpinner Component Styles
+ * 
+ * Features:
+ * - Matches set default button styling
+ * - Specific animation and color
+ * - Text styling
+ */
+
+.set-default-spinner-container {
+  @apply flex items-center gap-2 text-sm text-blue-600;
+}
+
+.set-default-spinner-icon {
+  @apply w-3 h-3;
+  animation: setDefaultSpinnerRotate 1s linear infinite;
+}
+
+.set-default-spinner-text {
+  @apply font-medium;
+}
+
+@keyframes setDefaultSpinnerRotate {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+} 

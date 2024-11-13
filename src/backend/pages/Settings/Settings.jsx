@@ -9,27 +9,37 @@
  * - Two-Step Authentication
  */
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import Profile from './sections/Profile/Profile';
 import Account from './sections/Account/Account';
-import Payment from './sections/Payment/Payment';
+import PaymentSection from './sections/Payment';
 import Notification from './sections/Notification/Notification';
-import TwoStep from './sections/TwoStep/TwoStep';
+import TwoStepSection from './sections/TwoStep';
 import './Settings.css';
 
 const SettingsContent = () => {
+  const [searchParams] = useSearchParams();
   const [activeSection, setActiveSection] = useState('account');
+
+  // Handle URL parameters for active section
+  useEffect(() => {
+    const section = searchParams.get('section');
+    if (section) {
+      setActiveSection(section);
+    }
+  }, [searchParams]);
 
   const renderSection = () => {
     switch (activeSection) {
       case 'account':
         return <Account />;
       case 'payment':
-        return <Payment />;
+        return <PaymentSection />;
       case 'notification':
         return <Notification />;
       case 'two-step':
-        return <TwoStep />;
+        return <TwoStepSection />;
       default:
         return <Account />;
     }

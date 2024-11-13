@@ -1,23 +1,47 @@
-/* Payment Section Styles */
+/**
+ * Payment Section Main Styles
+ * 
+ * Features:
+ * - Main container layout
+ * - Section header styling
+ * - Title and subtitle formatting
+ * - Upgrade button styling
+ * - Cards grid layout
+ */
+
+/* Main Container */
 .payment-section {
   @apply flex-1 bg-white rounded-lg p-8 w-full;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   animation: slideIn 0.4s ease-out;
 }
 
+/* Section Header */
+.section-header {
+  @apply mb-8;
+}
+
+.header-content {
+  @apply flex items-start justify-between w-full;
+}
+
+.title-container {
+  @apply flex flex-col gap-0.5;
+}
+
 .section-title {
   @apply text-xl font-semibold text-gray-800 mb-0 flex items-center gap-2;
+}
+
+.section-subtitle {
+  @apply text-sm text-gray-500 ml-0;
 }
 
 .section-icon {
   @apply text-blue-500;
 }
 
-.subsection-title {
-  @apply text-lg font-medium text-gray-700 mb-4;
-}
-
-/* Payment Methods */
+/* Cards Grid */
 .payment-methods {
   @apply mb-8;
 }
@@ -29,293 +53,16 @@
   gap: 1.5rem;
 }
 
-.payment-card {
-  @apply flex flex-col bg-white rounded-xl p-4 border border-gray-200
-         transition-all duration-300 hover:shadow-md w-full;
-  min-height: 180px;
-}
-
-.payment-card.active {
-  @apply bg-blue-50/50 border-blue-200;
-}
-
-.card-type-icon {
-  @apply w-10 h-10 rounded-full bg-blue-100 text-blue-500
-         flex items-center justify-center;
-}
-
-.card-details {
-  @apply flex flex-col;
-  margin-bottom: 0.5rem; /* Add 8px space above the border */
-}
-
-.card-name {
-  @apply font-medium text-gray-700;
-}
-
-.card-expiry {
-  @apply text-sm text-gray-500;
-}
-
-.default-badge {
-  @apply inline-flex items-center gap-1 px-2 py-1 bg-blue-100 
-         text-blue-600 text-xs font-medium rounded-full;
-  margin-left: 0;
-  margin-top: 0.5rem;
-  width: fit-content;
-}
-
-.add-payment-method {
-  @apply w-full p-4 border border-dashed border-gray-300 rounded-lg
-         text-gray-600 hover:border-blue-300 hover:text-blue-500
-         transition-all duration-300;
-}
-
-/* Billing History */
-.history-list {
-  @apply space-y-3;
-}
-
-.history-item {
-  @apply flex items-center justify-between p-4 
-         border border-gray-100 rounded-lg
-         hover:border-gray-200 transition-all duration-300;
-}
-
-.invoice-details {
-  @apply flex flex-col;
-}
-
-.invoice-date {
-  @apply font-medium text-gray-700;
-}
-
-.invoice-id {
-  @apply text-sm text-gray-500;
-}
-
-.invoice-amount {
-  @apply flex items-center gap-1 font-medium text-gray-700;
-}
-
-.amount-icon {
-  @apply text-gray-400;
-}
-
-.invoice-status {
-  @apply flex items-center gap-1.5 text-sm;
-}
-
-.invoice-status.success {
-  @apply text-green-600;
-}
-
-.status-icon {
-  @apply w-4 h-4;
-}
-
-.download-btn {
-  @apply flex items-center gap-2 px-3 py-1.5 
-         text-gray-600 hover:text-blue-500
-         transition-colors duration-300;
-}
-
-/* Animations */
-@keyframes slideIn {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-/* Responsive Design */
-@media (max-width: 768px) {
-  .history-item {
-    @apply flex-col gap-3;
-  }
-  
-  .download-btn {
-    @apply w-full justify-center;
-  }
-}
-
-/* Enhanced Payment Card Styles */
-.cards-grid {
-  @apply grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8;
-}
-
-.payment-card {
-  @apply bg-white rounded-xl p-4 border border-gray-200
-         transition-all duration-300 hover:shadow-md;
-  min-height: 200px;
-}
-
-.payment-card.active {
-  @apply border-blue-200 bg-blue-50/30;
-  box-shadow: 0 0 0 1px rgba(37, 99, 235, 0.2);
-}
-
-.card-header {
-  @apply flex items-center gap-4 mb-2 w-full;
-  padding-left: 4px; /* Add slight padding to align with card body */
-}
-
-.card-brand-container {
-  @apply flex items-center;
-  width: auto; /* Remove fixed width */
-}
-
-.card-brand-image {
-  @apply h-6 object-contain;
-  margin-left: 0; /* Remove negative margin */
-}
-
-.default-badge {
-  @apply flex items-center gap-1 px-2 py-1 bg-blue-100 
-         text-blue-600 text-xs font-medium rounded-full ml-auto;
-}
-
-.badge-icon {
-  @apply w-3 h-3;
-}
-
-.card-body {
-  @apply space-y-2;
-}
-
-.card-number {
-  @apply text-base font-medium text-gray-800 tracking-wider;
-}
-
-.card-details {
-  @apply space-y-1;
-}
-
-.card-holder {
-  @apply text-sm text-gray-600;
-}
-
-.card-expiry {
-  @apply text-sm text-gray-500;
-}
-
-.card-actions {
-  @apply flex justify-between items-center border-t border-gray-100;
-  padding-top: 0.375rem; /* 6px space between border and content */
-  margin-bottom: 0.25rem;
-}
-
-.set-default-btn {
-  @apply text-sm text-blue-600 hover:text-blue-700 
-         transition-colors duration-200;
-}
-
-.delete-card-btn {
-  @apply p-2 text-gray-400 hover:text-red-500 
-         transition-colors duration-200;
-}
-
-/* Add New Card Button */
-.add-card-container {
-  @apply w-full mt-4;
-}
-
-.add-card-btn {
-  @apply w-full p-4 border-2 border-dashed border-gray-200 rounded-xl
-         transition-all duration-300
-         hover:border-blue-300 hover:bg-blue-50/30;
-  min-height: 120px; /* Reduced height for single column */
-}
-
-.add-card-content {
-  @apply flex flex-col items-center text-gray-500
-         hover:text-blue-600 transition-colors duration-200;
-}
-
-.add-icon {
-  @apply w-6 h-6 mb-1;
-}
-
-.add-card-subtitle {
-  @apply text-xs text-gray-400 mt-1;
-}
-
-/* Card Hover Effects */
-.payment-card:hover {
-  transform: translateY(-2px);
-}
-
-.payment-card.active:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.1);
-}
-
-/* Add hover animation for add card button */
-.add-card-btn:hover .add-icon {
-  transform: scale(1.1);
-  transition: transform 0.2s ease;
-}
-
-/* Responsive adjustments */
-@media (max-width: 768px) {
-  .cards-grid {
-    @apply grid-cols-1;
-  }
-}
-
-/* Remove the accepted cards related styles */
-.accepted-cards,
-.accepted-cards-label,
-.accepted-cards-list,
-.accepted-card-logo {
-  display: none;
-}
-
-/* Update section header styles to be simpler */
-.section-header {
-  @apply mb-8;
-}
-
-/* Update title container styles */
-.title-container {
-  @apply flex flex-col gap-0.5;
-}
-
-/* Update subtitle styles */
-.section-subtitle {
-  @apply text-sm text-gray-500 ml-0;
-}
-
-/* Update section title styles */
-.section-title {
-  @apply text-xl font-semibold text-gray-800 mb-0 flex items-center gap-2;
-  margin-left: 0;
-}
-
-/* Update section header margin */
-.section-header {
-  @apply mb-8;
-}
-
-/* Update header styles to accommodate the button */
-.header-content {
-  @apply flex items-start justify-between w-full;
-}
-
-/* Add upgrade button styles */
+/* Upgrade Button */
 .upgrade-plan-btn {
   @apply flex items-center gap-2 px-4 py-2 
          bg-blue-500 text-white rounded-lg
          text-sm font-medium relative overflow-hidden
-         shadow-md hover:shadow-lg transition-all duration-200;
+         shadow-md hover:shadow-lg transition-all duration-200
+         hover:bg-blue-600 transform hover:-translate-y-0.5;
   position: relative;
 }
 
-/* Add shine effect */
 .upgrade-plan-btn::after {
   content: '';
   position: absolute;
@@ -339,17 +86,33 @@
   transform: rotate(45deg) translate(50%, -50%);
 }
 
-/* Update icon styles */
 .upgrade-icon {
-  @apply w-4 h-4 relative z-10; /* Ensure icon stays above shine effect */
+  @apply w-4 h-4 relative z-10;
 }
 
-/* Ensure text stays above shine effect */
 .upgrade-plan-btn span {
   @apply relative z-10;
 }
 
-/* Responsive adjustments */
+/* Animations */
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .cards-list {
+    @apply grid-cols-1;
+  }
+}
+
 @media (max-width: 640px) {
   .header-content {
     @apply flex-col gap-4;
@@ -358,28 +121,4 @@
   .upgrade-plan-btn {
     @apply w-full justify-center;
   }
-}
-
-/* Add container for default badge */
-.default-badge-container {
-  @apply pl-0 mt-0;
-}
-
-/* Update default badge styles */
-.default-badge {
-  @apply inline-flex items-center gap-1 px-2 py-1 bg-blue-100 
-         text-blue-600 text-xs font-medium rounded-full;
-  margin: 0;
-  width: fit-content;
-}
-
-.badge-icon {
-  @apply w-3 h-3;
-}
-
-/* Update payment card padding */
-.payment-card {
-  @apply flex flex-col bg-white rounded-xl p-4 border border-gray-200
-         transition-all duration-300 hover:shadow-md w-full;
-  min-height: 180px;
 }

@@ -303,3 +303,25 @@
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
 }
+
+/* Profile Status Styles */
+.profile-status {
+  @apply text-xs px-3 py-1 rounded-full font-medium inline-flex items-center;
+  white-space: nowrap;
+}
+
+.profile-status.entrepreneur {
+  @apply bg-blue-100 text-blue-600;
+}
+
+.profile-status.student {
+  @apply bg-green-100 text-green-600;
+}
+
+.profile-status.jobseeker {
+  @apply bg-purple-100 text-purple-600;
+}
+
+.profile-status.company {
+  @apply bg-orange-100 text-orange-600;
+}

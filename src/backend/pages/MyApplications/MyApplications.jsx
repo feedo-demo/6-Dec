@@ -49,7 +49,9 @@
  * )
  */
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useAuth } from '../../../auth/AuthContext';
+import { applicationOperations } from '../../../applications/applicationManager';
 import {
     FiSearch,      // Search/magnifying glass icon - Used for search functionality
     FiFilter,      // Filter icon - Used for filtering applications
@@ -67,6 +69,7 @@ import {
 } from 'react-icons/fi';
 import './MyApplications.css';
 import AnimatedNumber from '../../components/Animated/AnimatedNumber';
+import Button from '../../components/Button/Button';
 
 /**
  * Formats a date string into a more readable format
@@ -83,113 +86,166 @@ const formatDate = (dateString) => {
 };
 
 const MyApplications = () => {
-  /**
-   * Application state management
-   * - applications: Array of application objects with details
-   * - searchTerm: Current search input value
-   * - filterStatus: Current status filter selection
-   * - currentPage: Active pagination page
-   */
-  const [applications, setApplications] = useState([
-    {
-      id: 1,
-      name: "Senior Software Engineer - Microsoft",
-      submissionDate: "2024-03-15",
-      status: "pending",
-      category: "Technology",
-      deadline: "2024-04-30"
-    },
-    {
-      id: 2,
-      name: "Product Manager - Google",
-      submissionDate: "2024-03-10",
-      status: "approved",
-      category: "Product Management",
-      deadline: "2024-04-15"
-    },
-    {
-      id: 3,
-      name: "UX Designer - Apple",
-      submissionDate: "2024-03-08",
-      status: "rejected",
-      category: "Design",
-      deadline: "2024-05-01"
-    },
-    {
-      id: 4,
-      name: "Data Scientist - Amazon",
-      submissionDate: "2024-03-12",
-      status: "follow-up",
-      category: "Data Science",
-      deadline: "2024-06-30"
-    },
-    {
-      id: 5,
-      name: "Frontend Developer - Meta",
-      submissionDate: "2024-03-01",
-      status: "incomplete",
-      category: "Development",
-      deadline: "2024-04-20"
-    },
-    {
-      id: 6,
-      name: "DevOps Engineer - Netflix",
-      submissionDate: "2024-02-28",
-      status: "pending",
-      category: "Operations",
-      deadline: "2024-05-15"
-    },
-    {
-      id: 7,
-      name: "Full Stack Developer - Spotify",
-      submissionDate: "2024-03-05",
-      status: "follow-up",
-      category: "Development",
-      deadline: "2024-04-25"
-    },
-    {
-      id: 8,
-      name: "Cloud Architect - AWS",
-      submissionDate: "2024-03-18",
-      status: "incomplete",
-      category: "Infrastructure",
-      deadline: "2024-06-01"
-    },
-    {
-      id: 9,
-      name: "ML Engineer - OpenAI",
-      submissionDate: "2024-03-20",
-      status: "approved",
-      category: "AI/ML",
-      deadline: "2024-05-30"
-    },
-    {
-      id: 10,
-      name: "Backend Developer - LinkedIn",
-      submissionDate: "2024-03-14",
-      status: "follow-up",
-      category: "Development",
-      deadline: "2024-04-28"
-    }
-  ]);
-
+  const { user } = useAuth();
+  const [applications, setApplications] = useState([]);
+  const [stats, setStats] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 5; // Number of items to show per page
+  const itemsPerPage = 5;
+
+  // Fetch applications and stats
+  useEffect(() => {
+    const fetchData = async () => {
+      if (!user?.profile?.authUid) return;
+
+      try {
+        setLoading(true);
+        const [applicationsData, statsData] = await Promise.all([
+          applicationOperations.getUserApplications(user.profile.authUid, {
+            status: filterStatus !== 'all' ? filterStatus : undefined
+          }),
+          applicationOperations.getApplicationStats(user.profile.authUid)
+        ]);
+
+        setApplications(applicationsData);
+        setStats(statsData);
+        setError(null);
+      } catch (err) {
+        console.error('Error fetching applications:', err);
+        setError('Failed to load applications. Please try again.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [user?.profile?.authUid, filterStatus]);
+
+  /**
+   * Creates a demo application for testing purposes
+   * TODO: Remove this in production - This is only for demonstration
+   */
+  const createDemoApplication = () => {
+    // Generate random company name from top tech companies
+    const companies = ['Google', 'Meta', 'Apple', 'Amazon', 'Microsoft', 'Netflix', 'Tesla', 'Twitter'];
+    const positions = ['Frontend Developer', 'Backend Engineer', 'Full Stack Developer', 'UI/UX Designer', 'Product Manager'];
+    const categories = ['Technology', 'Development', 'Design', 'Product', 'Engineering'];
+    const statuses = ['pending', 'approved', 'rejected', 'follow-up', 'incomplete'];
+    
+    const randomCompany = companies[Math.floor(Math.random() * companies.length)];
+    const randomPosition = positions[Math.floor(Math.random() * positions.length)];
+    const randomCategory = categories[Math.floor(Math.random() * categories.length)];
+    const randomStatus = statuses[Math.floor(Math.random() * statuses.length)];
+
+    // Create demo application data
+    const demoApplication = {
+      name: `${randomPosition} - ${randomCompany}`,
+      category: randomCategory,
+      description: `Exciting opportunity to work as a ${randomPosition} at ${randomCompany}.`,
+      status: randomStatus,
+      progress: Math.floor(Math.random() * 100), // Random progress 0-100
+      userId: user.profile.authUid,
+      submissionDate: new Date().toISOString(),
+      deadline: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 days from now
+      documents: [],
+      interviews: [],
+      notes: '',
+      feedback: '',
+      isArchived: false
+    };
+
+    return demoApplication;
+  };
+
+  /**
+   * Handles the creation of a new application
+   * TODO: In production, this should open a form modal instead of creating demo data
+   */
+  const handleCreateApplication = async () => {
+    try {
+      setLoading(true);
+      const demoApplication = createDemoApplication();
+      
+      // Create new application using applicationOperations
+      const newApplication = await applicationOperations.createApplication(demoApplication);
+
+      // Update local state
+      setApplications(prev => [newApplication, ...prev]);
+      
+      // Update stats - Add null check and initialize if needed
+      setStats(prev => {
+        const currentStats = prev || {
+          total: 0,
+          pending: 0,
+          approved: 0,
+          rejected: 0,
+          incomplete: 0,
+          followUp: 0
+        };
+        
+        // Convert follow-up status to match stats key
+        const statusKey = newApplication.status === 'follow-up' ? 'followUp' : newApplication.status;
+        
+        return {
+          ...currentStats,
+          total: currentStats.total + 1,
+          [statusKey]: currentStats[statusKey] + 1
+        };
+      });
+
+      // Show success message (you might want to add a toast notification here)
+      console.log('Demo application created successfully!');
+    } catch (err) {
+      console.error('Error creating demo application:', err);
+      setError('Failed to create application. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Handle application deletion
+  const handleDelete = async (id) => {
+    if (window.confirm('Are you sure you want to delete this application?')) {
+      try {
+        setLoading(true);
+        await applicationOperations.deleteApplication(id);
+        
+        // Update local state
+        const deletedApp = applications.find(app => app.id === id);
+        setApplications(prev => prev.filter(app => app.id !== id));
+        
+        // Update stats
+        if (deletedApp) {
+          setStats(prev => ({
+            ...prev,
+            total: prev.total - 1,
+            [deletedApp.status]: prev[deletedApp.status] - 1
+          }));
+        }
+      } catch (err) {
+        console.error('Error deleting application:', err);
+        setError('Failed to delete application. Please try again.');
+      } finally {
+        setLoading(false);
+      }
+    }
+  };
 
   /**
    * Status summary object
    * Tracks the count of applications in each status category
    * Used for displaying status boxes and quick statistics
    */
-  const statusSummary = {
-    total: 10,
-    pending: 2,
-    incomplete: 2,
-    followUp: 3,
-    approved: 2,
-    rejected: 1
+  const statusSummary = stats || {
+    total: 0,
+    pending: 0,
+    approved: 0,
+    rejected: 0,
+    incomplete: 0,
+    followUp: 0
   };
 
   /**
@@ -247,15 +303,6 @@ const MyApplications = () => {
   };
 
   /**
-   * Action handler for deleting application
-   * Shows confirmation dialog before deletion
-   * @param {number} id - Application ID to delete
-   */
-  const handleDelete = (id) => {
-    console.log('Deleting application:', id);
-  };
-
-  /**
    * Pagination helper functions
    * Calculate current page items and total pages
    */
@@ -296,10 +343,15 @@ const MyApplications = () => {
     <div className="my-applications">
       {/* Header Section - Contains create button and page title */}
       <div className="applications-header">
-        <button className="create-application-btn">
-          <FiPlus className="w-4 h-4" />
-          Create New Job Application
-        </button>
+        <Button 
+          variant="create"
+          onClick={handleCreateApplication}
+          disabled={loading}
+          className="w-auto px-10 inline-flex items-center"
+        >
+          <FiPlus className="w-4 h-4 mr-2 inline-block" />
+          <span>Create Demo Application</span>
+        </Button>
       </div>
 
       {/* Status Summary Section - Interactive status filter boxes */}
@@ -447,77 +499,96 @@ const MyApplications = () => {
       {/* Applications Table Section */}
       <div className="applications-table">
         <table>
-          {/* Table Header */}
+          {/* Table Header - Removed Deadline */}
           <thead>
             <tr>
               <th>Job Application Name</th>
               <th>Submission Date</th>
               <th>Status</th>
               <th>Category</th>
-              <th>Deadline</th>
               <th>Actions</th>
             </tr>
           </thead>
           
-          {/* Table Body - Mapped Applications */}
+          {/* Table Body - Updated */}
           <tbody>
-            {currentItems.map((app) => (
-              <tr key={app.id}>
-                {/* Application Name */}
-                <td>{app.name}</td>
-                
-                {/* Submission Date */}
-                <td>{formatDate(app.submissionDate)}</td>
-                
-                {/* Status Badge */}
-                <td>
-                  <span className={`status-badge ${app.status}`}>
-                    {app.status.charAt(0).toUpperCase() + app.status.slice(1)}
-                  </span>
-                </td>
-                
-                {/* Category */}
-                <td>{app.category}</td>
-                
-                {/* Deadline with Icon */}
-                <td>
-                  <div className="deadline-cell">
-                    <FiClock className="deadline-icon" />
-                    {formatDate(app.deadline)}
-                  </div>
-                </td>
-                
-                {/* Action Buttons */}
-                <td>
-                  <div className="action-buttons">
-                    <button 
-                      onClick={() => handleView(app.id)}
-                      className="action-btn view"
-                      title="View Details"
-                      aria-label={`View details for ${app.name}`}
-                    >
-                      <FiEye />
-                    </button>
-                    <button 
-                      onClick={() => handleEdit(app.id)}
-                      className="action-btn edit"
-                      title="Edit Application"
-                      aria-label={`Edit ${app.name}`}
-                    >
-                      <FiEdit2 />
-                    </button>
-                    <button 
-                      onClick={() => handleDelete(app.id)}
-                      className="action-btn delete"
-                      title="Delete Application"
-                      aria-label={`Delete ${app.name}`}
-                    >
-                      <FiTrash2 />
-                    </button>
+            {loading ? (
+              <tr>
+                <td colSpan="5">
+                  <div className="loading-state p-8 text-center text-gray-500">
+                    Loading applications...
                   </div>
                 </td>
               </tr>
-            ))}
+            ) : error ? (
+              <tr>
+                <td colSpan="5">
+                  <div className="error-state p-8 text-center text-gray-500">
+                    {error}
+                  </div>
+                </td>
+              </tr>
+            ) : currentItems.length === 0 ? (
+              <tr>
+                <td colSpan="5">
+                  <div className="empty-state p-4 text-center text-gray-500">
+                    {searchTerm || filterStatus !== 'all' ? 
+                      'No applications found matching your search.' : 
+                      'No applications yet.'}
+                  </div>
+                </td>
+              </tr>
+            ) : (
+              currentItems.map((app) => (
+                <tr key={app.id}>
+                  {/* Application Name */}
+                  <td>{app.name}</td>
+                  
+                  {/* Submission Date */}
+                  <td>{formatDate(app.submissionDate)}</td>
+                  
+                  {/* Status Badge */}
+                  <td>
+                    <span className={`status-badge ${app.status}`}>
+                      {app.status.charAt(0).toUpperCase() + app.status.slice(1)}
+                    </span>
+                  </td>
+                  
+                  {/* Category */}
+                  <td>{app.category}</td>
+                  
+                  {/* Action Buttons */}
+                  <td>
+                    <div className="action-buttons">
+                      <button 
+                        onClick={() => handleView(app.id)}
+                        className="action-btn view"
+                        title="View Details"
+                        aria-label={`View details for ${app.name}`}
+                      >
+                        <FiEye />
+                      </button>
+                      <button 
+                        onClick={() => handleEdit(app.id)}
+                        className="action-btn edit"
+                        title="Edit Application"
+                        aria-label={`Edit ${app.name}`}
+                      >
+                        <FiEdit2 />
+                      </button>
+                      <button 
+                        onClick={() => handleDelete(app.id)}
+                        className="action-btn delete"
+                        title="Delete Application"
+                        aria-label={`Delete ${app.name}`}
+                      >
+                        <FiTrash2 />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))
+            )}
           </tbody>
         </table>
       </div>

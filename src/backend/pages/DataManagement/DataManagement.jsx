@@ -10,7 +10,8 @@
  * - Progress tracking with DataSubmission component
  */
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 
 // Icon imports for tab navigation
 import { 
@@ -23,7 +24,7 @@ import {
 // Tab section component imports
 import Personal from './sections/TabsSection/Personal';
 import Education from './sections/TabsSection/Education';
-import Additional from './sections/TabsSection/Additional';
+import WorkExperience from './sections/TabsSection/WorkExperience';
 import Verification from './sections/TabsSection/Verification';
 
 // Reusable component imports
@@ -33,14 +34,24 @@ import DataSubmission from '../Dashboard/sections/DataSubmission/DataSubmission'
 import './DataManagement.css';
 
 const DataManagement = () => {
-  // Active tab state management
+  const [searchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState('Personal');
+
+  // Handle URL parameters for active tab
+  useEffect(() => {
+    const tab = searchParams.get('tab');
+    if (tab) {
+      // Capitalize first letter for matching tab names
+      const formattedTab = tab.charAt(0).toUpperCase() + tab.slice(1);
+      setActiveTab(formattedTab);
+    }
+  }, [searchParams]);
 
   /**
    * Tab configuration array
    * Defines the available tabs in the interface
    */
-  const tabs = ['Personal', 'Education', 'Additional', 'Verification'];
+  const tabs = ['Personal', 'Education', 'Work Experience', 'Verification'];
 
   /**
    * Icon mapping object
@@ -49,7 +60,7 @@ const DataManagement = () => {
   const tabIcons = {
     Personal: <FiUser className="w-4 h-4" />,
     Education: <FiBook className="w-4 h-4" />,
-    Additional: <FiFileText className="w-4 h-4" />,
+    'Work Experience': <FiFileText className="w-4 h-4" />,
     Verification: <FiShield className="w-4 h-4" />
   };
 
@@ -63,8 +74,8 @@ const DataManagement = () => {
         return <Personal />;
       case 'Education':
         return <Education />;
-      case 'Additional':
-        return <Additional />;
+      case 'Work Experience':
+        return <WorkExperience />;
       case 'Verification':
         return <Verification />;
       default:

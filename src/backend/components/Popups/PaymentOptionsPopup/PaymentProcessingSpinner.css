@@ -1,0 +1,30 @@
+/**
+ * PaymentProcessingSpinner Component Styles
+ * 
+ * Features:
+ * - Centered layout
+ * - Smooth animation
+ * - Consistent branding colors
+ */
+
+.payment-processing-spinner {
+  @apply flex flex-col items-center justify-center gap-2 p-4 w-full;
+}
+
+.spinner-icon {
+  @apply w-6 h-6 text-blue-500;
+  animation: spin 1s linear infinite;
+}
+
+.spinner-text {
+  @apply text-sm text-gray-600 font-medium text-center;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+} 

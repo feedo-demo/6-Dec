@@ -7,7 +7,7 @@
  * - AuthContext integration
  */
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { FiUser, FiCreditCard, FiBell, FiCamera, FiShield } from 'react-icons/fi';
 import AnimatedNumber from '../../../../components/Animated/AnimatedNumber';
 import './Profile.css';
@@ -15,11 +15,16 @@ import { FALLBACK_PROFILE_IMAGE, getEmojiAvatar } from '../../../../constants/pr
 import { storage } from '../../../../../firebase/config';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { useAuth } from '../../../../../auth/AuthContext';  // Import useAuth
+import { applicationOperations } from '../../../../../applications/applicationManager';
 
 const Profile = ({ activeSection, onSectionChange }) => {
   const [isHovered, setIsHovered] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
+  const [stats, setStats] = useState({
+    applications: 0,
+    profileCompletion: 0
+  });
 
   // Use AuthContext instead of direct Firebase auth
   const { user, loading: authLoading, updateProfile } = useAuth();
@@ -31,6 +36,27 @@ const Profile = ({ activeSection, onSectionChange }) => {
     { id: 'two-step', icon: FiShield, label: 'Two-Step Authentication' }
   ];
 
+  const getProfileImage = () => {
+    if (authLoading) return FALLBACK_PROFILE_IMAGE;
+    
+    // For Google users
+    if (user?.profile?.provider === 'google' && user?.profile?.photoURL) {
+      return user.profile.photoURL;
+    }
+    
+    // For users with custom uploaded photos
+    if (user?.profile?.photoURL) {
+      return user.profile.photoURL;
+    }
+    
+    // Fallback to emoji avatar if we have authUid
+    if (user?.profile?.authUid) {
+      return getEmojiAvatar(user.profile.authUid);
+    }
+    
+    return FALLBACK_PROFILE_IMAGE;
+  };
+
   const handlePhotoUpload = async (event) => {
     const file = event.target.files[0];
     if (!file) return;
@@ -38,17 +64,16 @@ const Profile = ({ activeSection, onSectionChange }) => {
     try {
       setIsUploading(true);
       
-      // Create a reference to the storage location
-      const storageRef = ref(storage, `profile-photos/${user.authUid}`);
-      
-      // Upload the file
+      const storageRef = ref(storage, `profile-photos/${user.profile.authUid}`);
       await uploadBytes(storageRef, file);
-      
-      // Get the download URL
       const photoURL = await getDownloadURL(storageRef);
       
-      // Use AuthContext updateProfile instead of direct Firebase call
-      await updateProfile({ photoURL });
+      await updateProfile({
+        profile: {
+          ...user.profile,
+          photoURL
+        }
+      });
       
     } catch (error) {
       console.error('Error uploading photo:', error);
@@ -69,6 +94,67 @@ const Profile = ({ activeSection, onSectionChange }) => {
 
   // Add this console.log to debug
   console.log('User data in Profile:', user);
+
+  // Add useEffect to fetch real stats
+  useEffect(() => {
+    const fetchStats = async () => {
+      if (!user?.profile?.authUid) return;
+
+      try {
+        // Fetch application stats
+        const applicationStats = await applicationOperations.getApplicationStats(user.profile.authUid);
+
+        // Calculate profile completion
+        const completedSections = calculateCompletedSections(user);
+        const totalSections = 4; // Personal, Education, Work Experience, Verification
+        const profileCompletion = Math.round((completedSections / totalSections) * 100);
+
+        setStats({
+          applications: applicationStats.total || 0,
+          profileCompletion: profileCompletion
+        });
+      } catch (error) {
+        console.error('Error fetching stats:', error);
+      }
+    };
+
+    fetchStats();
+  }, [user]);
+
+  // Helper function to calculate completed sections
+  const calculateCompletedSections = (user) => {
+    let completed = 0;
+
+    // Check Personal Data
+    if (user?.profile?.firstName && 
+        user?.profile?.lastName && 
+        user?.profile?.email && 
+        user?.profile?.phoneNumber && 
+        user?.profile?.location && 
+        user?.profile?.professionalSummary) {
+      completed++;
+    }
+
+    // Check Education
+    if (user?.education?.degreeLevel && 
+        user?.education?.fieldOfStudy && 
+        user?.education?.institutionName && 
+        user?.education?.graduationDate) {
+      completed++;
+    }
+
+    // Check Work Experience
+    if (user?.workExperience?.length > 0) {
+      completed++;
+    }
+
+    // Check Verification
+    if (user?.verification?.isVerified) {
+      completed++;
+    }
+
+    return completed;
+  };
 
   return (
     <div className="profile-section">
@@ -92,14 +178,17 @@ const Profile = ({ activeSection, onSectionChange }) => {
               <div className={`profile-photo ${isHovered ? 'hovered' : ''}`}>
                 <div className="photo-wrapper">
                   <img 
-                    src={user?.isGoogleUser ? user.photoURL : 
-                         (user?.photoURL || (user?.uid ? getEmojiAvatar(user.uid) : FALLBACK_PROFILE_IMAGE))}
+                    src={getProfileImage()}
                     alt="Profile"
                     className={`photo ${isUploading ? 'uploading' : ''} ${imageLoaded ? 'loaded' : ''}`}
                     onLoad={() => setImageLoaded(true)}
                     onError={(e) => {
-                      if (!user?.isGoogleUser) {
-                        e.target.src = user?.uid ? getEmojiAvatar(user.uid) : FALLBACK_PROFILE_IMAGE;
+                      if (user?.profile?.provider !== 'google') {
+                        e.target.src = user?.profile?.authUid ? 
+                          getEmojiAvatar(user.profile.authUid) : 
+                          FALLBACK_PROFILE_IMAGE;
+                      } else {
+                        e.target.src = FALLBACK_PROFILE_IMAGE;
                       }
                       setImageLoaded(true);
                     }}
@@ -133,26 +222,31 @@ const Profile = ({ activeSection, onSectionChange }) => {
 
             <div className="profile-info">
               <h3 className="profile-name">
-                {user?.displayName || 'User'}
-                {user?.profileType && (
-                  <span className={`profile-status ${user.profileType}`}>
-                    {formatProfileType(user.profileType)}
+                {user?.profile?.firstName && user?.profile?.lastName ? 
+                  `${user.profile.firstName} ${user.profile.lastName}` : 
+                  user?.metadata?.firstName && user?.metadata?.lastName ?
+                  `${user.metadata.firstName} ${user.metadata.lastName}` :
+                  'User'
+                }
+                {user?.profile?.userType && (
+                  <span className={`profile-status ${user.profile.userType}`}>
+                    {formatProfileType(user.profile.userType)}
                   </span>
                 )}
               </h3>
-              <p className="profile-email">{user?.email}</p>
+              <p className="profile-email">{user?.profile?.email}</p>
               
               <div className="profile-stats">
                 <div className="stat-item">
                   <span className="stat-value">
-                    <AnimatedNumber value={42} />
+                    <AnimatedNumber value={stats.applications} />
                   </span>
                   <span className="stat-label">Applications</span>
                 </div>
                 <div className="stat-divider"></div>
                 <div className="stat-item">
                   <span className="stat-value">
-                    <AnimatedNumber value={89} />%
+                    <AnimatedNumber value={stats.profileCompletion} />%
                   </span>
                   <span className="stat-label">Profile</span>
                 </div>

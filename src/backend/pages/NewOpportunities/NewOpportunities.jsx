@@ -17,9 +17,9 @@
  * - Slide panel for opportunity details
  */
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 // Icon component for visual indicators
-import { FiChevronDown } from 'react-icons/fi';
+import { FiChevronDown, FiPlus } from 'react-icons/fi';
 // Custom components for page sections
 import StatCards from './sections/StatCards/StatCards';
 import './NewOpportunities.css';
@@ -30,6 +30,43 @@ import { useNavigate } from 'react-router-dom';
 // Panel components for detailed views
 import SlidePanel from './sections/SlidePanel/SlidePanel';
 import OpportunityDetails from './sections/OpportunityDetails/OpportunityDetails';
+// Add imports
+import { useAuth } from '../../../auth/AuthContext';
+import { opportunityOperations, createOpportunityDataStructure } from '../../../applications/applicationManager';
+// First, add Button to imports at the top
+import Button from '../../components/Button/Button';
+
+// Add this helper function near the top of the file
+const formatDate = (dateString) => {
+  const date = new Date(dateString);
+  const now = new Date();
+  const diffTime = date.getTime() - now.getTime();
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+  // If deadline is today
+  if (diffDays === 0) {
+    return 'Today';
+  }
+  
+  // If deadline is tomorrow
+  if (diffDays === 1) {
+    return 'Tomorrow';
+  }
+  
+  // If deadline is within next 7 days
+  if (diffDays > 0 && diffDays <= 7) {
+    return `${diffDays} days left`;
+  }
+
+  // For other dates, show formatted date
+  const options = { 
+    month: 'short', 
+    day: 'numeric', 
+    year: date.getFullYear() !== now.getFullYear() ? 'numeric' : undefined 
+  };
+  
+  return date.toLocaleDateString('en-US', options);
+};
 
 const NewOpportunities = () => {
   // State for search functionality
@@ -40,196 +77,124 @@ const NewOpportunities = () => {
   const navigate = useNavigate();
   // State for selected opportunity details
   const [selectedOpportunity, setSelectedOpportunity] = useState(null);
+  // Add state and auth
+  const { user } = useAuth();
+  const [opportunities, setOpportunities] = useState([]);
+  const [stats, setStats] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [statsRefreshTrigger, setStatsRefreshTrigger] = useState(0);
 
-  // Updated sample data with more entries and unique descriptions
-  const opportunities = [
-    {
-      id: 1,
-      name: "AI Innovation Grant",
-      description: "Research funding...",
-      matchPercentage: 95,
-      applicationProgress: 40,
-      deadline: "Oct 7, 2024",
-      status: "active"
-    },
-    {
-      id: 2,
-      name: "Tech Startup Accelerator",
-      description: "Startup support...",
-      matchPercentage: 88,
-      applicationProgress: 60,
-      deadline: "Oct 15, 2024",
-      status: "closing-soon"
-    },
-    {
-      id: 3,
-      name: "Digital Innovation Fund",
-      description: "Tech funding...",
-      matchPercentage: 92,
-      applicationProgress: 25,
-      deadline: "Nov 1, 2024",
-      status: "new"
-    },
-    {
-      id: 4,
-      name: "Research Fellowship Program",
-      description: "Academic grant...",
-      matchPercentage: 85,
-      applicationProgress: 75,
-      deadline: "Oct 30, 2024",
-      status: "active"
-    },
-    {
-      id: 5,
-      name: "Sustainability Grant",
-      description: "Green initiatives...",
-      matchPercentage: 78,
-      applicationProgress: 90,
-      deadline: "Nov 15, 2024",
-      status: "new"
-    },
-    {
-      id: 6,
-      name: "Women in Tech Scholarship",
-      description: "Education support...",
-      matchPercentage: 91,
-      applicationProgress: 15,
-      deadline: "Dec 1, 2024",
-      status: "active"
-    },
-    {
-      id: 7,
-      name: "Cloud Innovation Award",
-      description: "Cloud projects...",
-      matchPercentage: 87,
-      applicationProgress: 45,
-      deadline: "Nov 20, 2024",
-      status: "new"
-    },
-    {
-      id: 8,
-      name: "Social Impact Grant",
-      description: "Community projects...",
-      matchPercentage: 82,
-      applicationProgress: 70,
-      deadline: "Dec 15, 2024",
-      status: "active"
-    },
-    {
-      id: 9,
-      name: "Cybersecurity Fellowship",
-      description: "Security research...",
-      matchPercentage: 94,
-      applicationProgress: 30,
-      deadline: "Nov 30, 2024",
-      status: "closing-soon"
-    },
-    {
-      id: 10,
-      name: "Healthcare Innovation Fund",
-      description: "Medical tech...",
-      matchPercentage: 89,
-      applicationProgress: 55,
-      deadline: "Dec 5, 2024",
-      status: "new"
-    },
-    {
-      id: 11,
-      name: "Blockchain Innovation Grant",
-      description: "DeFi projects...",
-      matchPercentage: 86,
-      applicationProgress: 20,
-      deadline: "Dec 10, 2024",
-      status: "new"
-    },
-    {
-      id: 12,
-      name: "EdTech Development Fund",
-      description: "Education tech...",
-      matchPercentage: 93,
-      applicationProgress: 65,
-      deadline: "Dec 20, 2024",
-      status: "active"
-    },
-    {
-      id: 13,
-      name: "Clean Energy Accelerator",
-      description: "Renewable energy...",
-      matchPercentage: 88,
-      applicationProgress: 35,
-      deadline: "Jan 5, 2025",
-      status: "new"
-    },
-    {
-      id: 14,
-      name: "IoT Innovation Program",
-      description: "Smart devices...",
-      matchPercentage: 91,
-      applicationProgress: 50,
-      deadline: "Dec 25, 2024",
-      status: "active"
-    },
-    {
-      id: 15,
-      name: "FinTech Startup Grant",
-      description: "Financial tech...",
-      matchPercentage: 84,
-      applicationProgress: 80,
-      deadline: "Jan 10, 2025",
-      status: "closing-soon"
-    },
-    {
-      id: 16,
-      name: "AR/VR Development Fund",
-      description: "Immersive tech...",
-      matchPercentage: 89,
-      applicationProgress: 45,
-      deadline: "Jan 15, 2025",
-      status: "new"
-    },
-    {
-      id: 17,
-      name: "Space Tech Initiative",
-      description: "Space research...",
-      matchPercentage: 87,
-      applicationProgress: 25,
-      deadline: "Jan 20, 2025",
-      status: "active"
-    },
-    {
-      id: 18,
-      name: "Quantum Computing Grant",
-      description: "Quantum tech...",
-      matchPercentage: 96,
-      applicationProgress: 70,
-      deadline: "Dec 30, 2024",
-      status: "closing-soon"
-    },
-    {
-      id: 19,
-      name: "Robotics Research Fund",
-      description: "Robotics dev...",
-      matchPercentage: 92,
-      applicationProgress: 55,
-      deadline: "Jan 25, 2025",
-      status: "new"
-    },
-    {
-      id: 20,
-      name: "Digital Health Grant",
-      description: "Health tech...",
-      matchPercentage: 90,
-      applicationProgress: 40,
-      deadline: "Jan 30, 2025",
-      status: "active"
+  // Add createDemoOpportunity function
+  const createDemoOpportunity = () => {
+    const companies = ['Google', 'Meta', 'Apple', 'Amazon', 'Microsoft', 'Netflix', 'Tesla', 'Twitter'];
+    const positions = ['Frontend Developer', 'Backend Engineer', 'Full Stack Developer', 'UI/UX Designer', 'Product Manager'];
+    const categories = ['Technology', 'Development', 'Design', 'Product', 'Engineering'];
+    const statuses = ['new', 'active', 'closing-soon'];
+    const locations = ['remote', 'onsite', 'hybrid'];
+    
+    const randomCompany = companies[Math.floor(Math.random() * companies.length)];
+    const randomPosition = positions[Math.floor(Math.random() * positions.length)];
+    const randomCategory = categories[Math.floor(Math.random() * categories.length)];
+    const randomStatus = statuses[Math.floor(Math.random() * statuses.length)];
+    const randomLocation = locations[Math.floor(Math.random() * locations.length)];
+
+    return {
+      title: `${randomPosition} at ${randomCompany}`,
+      type: 'job',
+      creatorId: user.profile.authUid,
+      description: `Exciting opportunity to work as a ${randomPosition} at ${randomCompany}.`,
+      category: randomCategory,
+      status: randomStatus,
+      location: {
+        type: randomLocation,
+        country: 'United Kingdom',
+        city: 'London'
+      },
+      requirements: [
+        'Bachelor\'s degree in Computer Science or related field',
+        '3+ years of professional experience',
+        'Strong problem-solving skills',
+        'Excellent communication skills'
+      ],
+      compensation: {
+        type: 'paid',
+        amount: Math.floor(Math.random() * (150000 - 50000) + 50000),
+        currency: 'GBP',
+        details: 'Annual salary + benefits'
+      },
+      visibility: 'public'
+    };
+  };
+
+  // Add useEffect to fetch opportunities when component mounts
+  useEffect(() => {
+    const fetchOpportunities = async () => {
+      if (!user?.profile?.authUid) return;
+
+      try {
+        setLoading(true);
+        const [fetchedOpportunities, statsData] = await Promise.all([
+          opportunityOperations.getOpportunities({
+            userId: user.profile.authUid
+          }),
+          opportunityOperations.getOpportunityStats(user.profile.authUid)
+        ]);
+
+        // Log the fetched data for debugging
+        console.log('Fetched opportunities:', fetchedOpportunities);
+        
+        // Update state with fetched data
+        setOpportunities(fetchedOpportunities || []);
+        setStats(statsData);
+        setError(null);
+      } catch (err) {
+        console.error('Error fetching opportunities:', err);
+        setError('Failed to load opportunities. Please try again.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    // Call fetchOpportunities when component mounts or user changes
+    fetchOpportunities();
+  }, [user?.profile?.authUid]); // Add user ID to dependencies
+
+  // Update handleCreateDemoOpportunity to use the user's ID
+  const handleCreateDemoOpportunity = async () => {
+    if (!user?.profile?.authUid) return;
+
+    try {
+      setLoading(true);
+      const demoOpportunity = createDemoOpportunity();
+      const opportunityData = createOpportunityDataStructure({
+        ...demoOpportunity,
+        creatorId: user.profile.authUid
+      });
+      
+      // Create new opportunity using opportunityOperations
+      const newOpportunity = await opportunityOperations.createOpportunity(opportunityData);
+
+      // Update local state
+      setOpportunities(prev => [newOpportunity, ...prev]);
+      
+      // Trigger stats refresh
+      setStatsRefreshTrigger(prev => prev + 1);
+
+      console.log('Demo opportunity created successfully!');
+    } catch (err) {
+      console.error('Error creating demo opportunity:', err);
+      setError('Failed to create opportunity. Please try again.');
+    } finally {
+      setLoading(false);
     }
-  ];
+  };
 
   // Filter opportunities based on search term
-  // Performs case-insensitive search on name and description
   const filteredOpportunities = opportunities.filter(opp => {
-    const matchesSearch = opp.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         opp.description.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch = !searchTerm || 
+      (opp.title && opp.title.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (opp.description && opp.description.toLowerCase().includes(searchTerm.toLowerCase()));
     return matchesSearch;
   });
 
@@ -255,8 +220,19 @@ const NewOpportunities = () => {
 
   return (
     <div className="new-opportunities-page">
+      <div className="flex justify-end items-center mb-8">
+        <Button 
+          variant="create"
+          onClick={handleCreateDemoOpportunity}
+          disabled={loading}
+          className="w-auto px-10 inline-flex items-center"
+        >
+          <FiPlus className="w-4 h-4 mr-2 inline-block" />
+          <span>Create Demo Opportunity</span>
+        </Button>
+      </div>
       {/* Top statistics cards */}
-      <StatCards type="opportunities" />
+      <StatCards refreshTrigger={statsRefreshTrigger} />
       
       {/* Main opportunities list section */}
       <div className="opportunities-section">
@@ -290,63 +266,78 @@ const NewOpportunities = () => {
             <div className="header-cell">Action</div>
           </div>
 
-          {/* Opportunity rows with dynamic data */}
-          {currentItems.map(opportunity => (
-            <div key={opportunity.id} className="table-row">
-              {/* Name column */}
-              <div className="cell">
-                <span className="opportunity-name">{opportunity.name}</span>
-              </div>
-              {/* Match percentage with animated progress bar */}
-              <div className="cell">
-                <div className="progress-container">
-                  <div className="progress-bar match">
-                    <div 
-                      className="progress-fill"
-                      style={{ 
-                        '--target-width': `${opportunity.matchPercentage}%`
-                      }}
-                    />
-                  </div>
-                  <span className="progress-text">
-                    <AnimatedNumber value={opportunity.matchPercentage} />%
-                  </span>
-                </div>
-              </div>
-              <div className="cell"></div>
-              {/* Application progress with animated bar */}
-              <div className="cell">
-                <div className="progress-container">
-                  <div className="progress-bar application">
-                    <div 
-                      className="progress-fill"
-                      style={{ 
-                        '--target-width': `${opportunity.applicationProgress}%`
-                      }}
-                    />
-                  </div>
-                  <span className="progress-text">
-                    <AnimatedNumber value={opportunity.applicationProgress} />%
-                  </span>
-                </div>
-              </div>
-              <div className="cell"></div>
-              {/* Deadline display */}
-              <div className="cell deadline-cell">
-                <FiChevronDown className="deadline-icon" />
-                {opportunity.deadline}
-              </div>
-              {/* Action button */}
-              <div className="cell">
-                <button 
-                  className="apply-now-btn"
-                  onClick={() => handleApplyClick(opportunity)}
-                >
-                  Apply Now
-                </button>
-              </div>
+          {loading ? (
+            <div className="loading-state p-8 text-center text-gray-500">
+              Loading opportunities...
             </div>
-          ))}
+          ) : error ? (
+            <div className="error-state p-8 text-center text-red-500">
+              {error}
+            </div>
+          ) : filteredOpportunities.length === 0 ? (
+            <div className="empty-state p-8 text-center text-gray-500">
+              {searchTerm ? 
+                'No opportunities found matching your search.' : 
+                'No opportunities yet.'}
+            </div>
+          ) : (
+            currentItems.map(opportunity => (
+              <div key={opportunity.id} className="table-row">
+                {/* Name column */}
+                <div className="cell">
+                  <span className="opportunity-name">{opportunity.title}</span>
+                </div>
+                {/* Match percentage with animated progress bar */}
+                <div className="cell">
+                  <div className="progress-container">
+                    <div className="progress-bar match">
+                      <div 
+                        className="progress-fill"
+                        style={{ 
+                          '--target-width': `${opportunity.matchPercentage}%`
+                        }}
+                      />
+                    </div>
+                    <span className="progress-text">
+                      <AnimatedNumber value={opportunity.matchPercentage} />%
+                    </span>
+                  </div>
+                </div>
+                <div className="cell"></div>
+                {/* Application progress with animated bar */}
+                <div className="cell">
+                  <div className="progress-container">
+                    <div className="progress-bar application">
+                      <div 
+                        className="progress-fill"
+                        style={{ 
+                          '--target-width': `${opportunity.applicationProgress}%`
+                        }}
+                      />
+                    </div>
+                    <span className="progress-text">
+                      <AnimatedNumber value={opportunity.applicationProgress} />%
+                    </span>
+                  </div>
+                </div>
+                <div className="cell"></div>
+                {/* Deadline display */}
+                <div className="cell deadline-cell">
+                  <FiChevronDown className="deadline-icon" />
+                  {formatDate(opportunity.deadline)}
+                </div>
+                {/* Action button */}
+                <div className="cell">
+                  <button 
+                    className="apply-now-btn"
+                    onClick={() => handleApplyClick(opportunity)}
+                  >
+                    Apply Now
+                  </button>
+                </div>
+              </div>
+            ))
+          )}
         </div>
 
         {/* Pagination controls */}

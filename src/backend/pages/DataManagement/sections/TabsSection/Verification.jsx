@@ -7,20 +7,33 @@
  * - Submit functionality
  * - Input validation
  * - Interactive UI elements
- * 
- * Features:
- * - Code validation
- * - Terms acceptance tracking
- * - Submit button states
- * - Error handling
- * - Accessibility support
  */
 
-import React from 'react';
+import React, { useState } from 'react';
+import Button from '../../../../components/Button/Button';
 
 const Verification = () => {
+  const [loading, setLoading] = useState(false);
+  const [formData, setFormData] = useState({
+    verificationCode: '',
+    termsAccepted: false
+  });
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      // Verification logic here
+      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulated API call
+    } catch (error) {
+      console.error('Verification error:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
-    <div className="tab-pane">
+    <form onSubmit={handleSubmit} className="tab-pane">
       {/* Verification Code Input Group */}
       <div className="form-group">
         {/* Label with required indicator */}
@@ -33,6 +46,8 @@ const Verification = () => {
           maxLength={6}
           aria-label="Enter 6-digit verification code"
           aria-required="true"
+          value={formData.verificationCode}
+          onChange={(e) => setFormData({ ...formData, verificationCode: e.target.value })}
         />
         
         {/* Character limit indicator */}
@@ -57,6 +72,8 @@ const Verification = () => {
             className="mr-2"
             aria-label="Accept terms and conditions"
             aria-required="true"
+            checked={formData.termsAccepted}
+            onChange={(e) => setFormData({ ...formData, termsAccepted: e.target.checked })}
           />
           <label 
             htmlFor="terms" 
@@ -69,14 +86,16 @@ const Verification = () => {
 
       {/* Submit Button Group */}
       <div className="form-group">
-        <button 
-          className="verify-btn"
-          aria-label="Verify and submit information"
+        <Button
+          type="submit"
+          isLoading={loading}
+          disabled={loading || !formData.termsAccepted}
+          variant="gradient-blue"
         >
           Verify & Submit
-        </button>
+        </Button>
       </div>
-    </div>
+    </form>
   );
 };
 

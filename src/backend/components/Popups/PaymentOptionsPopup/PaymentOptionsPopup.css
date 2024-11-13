@@ -1,0 +1,84 @@
+/**
+ * PaymentOptionsPopup Component Styles
+ * 
+ * Features:
+ * - Modal overlay styling
+ * - Card option layouts
+ * - Hover effects
+ * - Responsive design
+ */
+
+.payment-options-container {
+  @apply p-6 w-full max-w-md;
+}
+
+.popup-header {
+  @apply flex justify-between items-center mb-6;
+}
+
+.popup-header h3 {
+  @apply text-xl font-semibold text-gray-800;
+}
+
+.saved-cards-list {
+  @apply space-y-3;
+}
+
+.saved-card-option {
+  @apply w-full flex items-center gap-4 p-4 
+         bg-white border border-gray-200 rounded-lg
+         hover:border-blue-300 hover:bg-blue-50/30
+         transition-all duration-200;
+}
+
+.card-icon {
+  @apply text-gray-400 w-6 h-6;
+}
+
+.card-details {
+  @apply flex flex-col items-start flex-grow;
+}
+
+.card-name {
+  @apply font-medium text-gray-700;
+}
+
+.card-number {
+  @apply text-sm text-gray-500;
+}
+
+.default-badge {
+  @apply px-2 py-1 text-xs font-medium text-blue-600 
+         bg-blue-100 rounded-full;
+}
+
+.add-new-card-btn {
+  @apply w-full flex items-center justify-center gap-2 
+         p-4 mt-4 border-2 border-dashed border-gray-200 
+         rounded-lg text-gray-600
+         hover:border-blue-300 hover:text-blue-600 
+         hover:bg-blue-50/30
+         transition-all duration-200;
+}
+
+.add-icon {
+  @apply w-5 h-5;
+}
+
+.saved-card-option.processing {
+  @apply bg-gray-50 cursor-not-allowed;
+}
+
+.saved-card-option:disabled {
+  @apply opacity-50 cursor-not-allowed;
+}
+
+.add-new-card-btn:disabled {
+  @apply opacity-50 cursor-not-allowed;
+}
+
+.card-brand-image {
+  @apply object-contain;
+  height: 28px;
+  width: auto;
+} 

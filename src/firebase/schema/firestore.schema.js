@@ -1,71 +1,204 @@
 /**
  * Firestore Database Schema Documentation
  * 
- * This file documents the structure of the Firestore database collections and documents.
- * Note: This is for documentation purposes and doesn't affect the actual database.
- * 
- * Database Structure Overview:
- * - entrepreneur/           // Collection for entrepreneur profiles and data
- * - student/               // Collection for student profiles and data
- * - jobseeker/            // Collection for job seeker profiles and data
- * - company/             // Collection for company profiles and data
+ * This file defines the complete structure of the Firestore database collections and documents.
  */
 
+// Define the schema structure
 const firestoreSchema = {
-  // Base profile structure that all profile types will follow
-  baseProfile: {
-    profile: {
-      authUid: 'string',
-      createdAt: 'timestamp',
-      email: 'string',
-      lastName: 'string',  // Move lastName before firstName
-      firstName: 'string',
-      isEmailVerified: 'boolean',
-      lastLoginAt: 'timestamp',
-      phoneNumber: 'string',
-      photoURL: 'string?',
-      provider: 'string'
-    },
-    status: 'string',
-    settings: {
-      notifications: 'boolean',
-      emailPreferences: {
-        marketing: 'boolean',
-        updates: 'boolean',
-        opportunities: 'boolean'
+  // Users collection containing all user types
+  users: {
+    [userId]: {
+      // Personal Information
+      personal: {
+        fullName: 'string',
+        email: 'string',
+        phoneNumber: 'string',
+        professionalSummary: 'string',
+        location: 'string',
+        lastUpdated: 'timestamp'
       },
-      theme: 'string'
+
+      // Educational Information
+      education: {
+        degreeLevel: 'string',  // high_school | associates | bachelors | masters | doctorate
+        fieldOfStudy: 'string',
+        institutionName: 'string',
+        graduationDate: 'timestamp',
+        gpa: 'number?',
+        academicAchievements: 'string?',
+        lastUpdated: 'timestamp'
+      },
+
+      // Work Experience Information
+      workExperience: [{
+        companyName: 'string',
+        jobTitle: 'string',
+        startDate: 'timestamp',
+        endDate: 'timestamp?',
+        isCurrentPosition: 'boolean',
+        responsibilities: 'string',
+        achievements: ['string']
+      }],
+
+      // Metadata
+      metadata: {
+        createdAt: 'timestamp',
+        lastLoginAt: 'timestamp',
+        lastUpdatedAt: 'timestamp',
+        isEmailVerified: 'boolean',
+        provider: 'string',  // email | google | etc.
+        userType: 'string',  // entrepreneur | student | jobseeker | company
+        status: 'string'     // active | inactive | pending
+      },
+
+      // User Settings
+      settings: {
+        notifications: 'boolean',
+        emailPreferences: {
+          marketing: 'boolean',
+          updates: 'boolean',
+          opportunities: 'boolean'
+        },
+        theme: 'string'  // light | dark
+      }
     }
   },
 
-  // Each collection follows the same base structure
-  entrepreneur: {
-    [userId]: {/* extends baseProfile */}
+  // Applications collection for all types of applications
+  applications: {
+    [applicationId]: {
+      // Basic Info
+      name: 'string',          // Job application name/title
+      category: 'string',      // Job category
+      description: 'string',   // Job description
+      
+      // Dates
+      createdAt: 'timestamp',
+      updatedAt: 'timestamp',
+      submissionDate: 'timestamp',
+      deadline: 'timestamp',
+      
+      // Status and Progress
+      status: 'string',        // 'pending' | 'approved' | 'rejected' | 'follow-up' | 'incomplete'
+      progress: 'number',      // Progress percentage (0-100)
+      
+      // Relations
+      userId: 'string',        // Reference to users collection
+      companyId: 'string',     // Reference to company in users collection
+      
+      // Additional Data
+      documents: [{
+        type: 'string',        // 'resume' | 'coverLetter' | 'portfolio' | 'other'
+        url: 'string',
+        name: 'string',
+        uploadedAt: 'timestamp'
+      }],
+      
+      // Interview Process
+      interviews: [{
+        stage: 'string',       // 'phone' | 'technical' | 'hr' | 'final'
+        scheduledFor: 'timestamp',
+        status: 'string',      // 'scheduled' | 'completed' | 'cancelled'
+        notes: 'string'
+      }],
+      
+      // Notes and Feedback
+      notes: 'string',
+      feedback: 'string',
+      
+      // Metadata
+      lastActivity: 'timestamp',
+      isArchived: 'boolean'
+    }
   },
 
-  student: {
-    [userId]: {/* extends baseProfile */}
-  },
-
-  jobseeker: {
-    [userId]: {/* extends baseProfile */}
-  },
-
-  company: {
-    [userId]: {/* extends baseProfile */}
-  },
-
-  // Shared collections remain the same...
+  // Opportunities collection for all types of listings
+  opportunities: {
+    [opportunityId]: {
+      type: 'string', // 'job' | 'program' | 'mentorship' | 'partnership' | 'event'
+      creatorId: 'string',        // Reference to users collection
+      title: 'string',
+      description: 'string',
+      requirements: ['string'],
+      location: {
+        type: 'string',           // 'remote' | 'onsite' | 'hybrid'
+        address: 'string?',
+        country: 'string',
+        city: 'string'
+      },
+      category: 'string',
+      status: 'string',           // 'active' | 'closed' | 'draft'
+      createdAt: 'timestamp',
+      updatedAt: 'timestamp',
+      expiresAt: 'timestamp',
+      visibility: 'string',       // 'public' | 'private' | 'invited'
+      compensation: {
+        type: 'string',           // 'paid' | 'unpaid' | 'variable'
+        amount: 'number?',
+        currency: 'string?',
+        details: 'string?'
+      }
+    }
+  }
 };
 
-/**
- * Security Rules Overview:
- * - Users can only read/write their own profile type data
- * - Shared collections have specific access rules based on profile type
- * - Opportunities are filtered based on user's profile type
- * - Applications are only accessible by their owners
- * - Subscriptions are only accessible by their owners
- * - Notifications are only accessible by their intended recipients
- */
+// Add indexes configuration
+const firestoreIndexes = {
+  users: [
+    {
+      collectionGroup: "users",
+      queryScope: "COLLECTION",
+      fields: [
+        { fieldPath: "metadata.userType", order: "ASCENDING" },
+        { fieldPath: "metadata.lastUpdatedAt", order: "DESCENDING" }
+      ]
+    },
+    {
+      collectionGroup: "users",
+      queryScope: "COLLECTION",
+      fields: [
+        { fieldPath: "metadata.status", order: "ASCENDING" },
+        { fieldPath: "metadata.lastUpdatedAt", order: "DESCENDING" }
+      ]
+    }
+  ],
+  opportunities: [
+    {
+      collectionGroup: "opportunities",
+      queryScope: "COLLECTION",
+      fields: [
+        {
+          fieldPath: "creatorId",
+          order: "ASCENDING"
+        },
+        {
+          fieldPath: "lastActivity",
+          order: "DESCENDING"
+        }
+      ]
+    },
+    // Add index for status filtering
+    {
+      collectionGroup: "opportunities",
+      queryScope: "COLLECTION",
+      fields: [
+        {
+          fieldPath: "creatorId",
+          order: "ASCENDING"
+        },
+        {
+          fieldPath: "status",
+          order: "ASCENDING"
+        },
+        {
+          fieldPath: "lastActivity",
+          order: "DESCENDING"
+        }
+      ]
+    }
+  ]
+};
 
-export default firestoreSchema; 
+// Export the schema and indexes
+export { firestoreSchema, firestoreIndexes }; 

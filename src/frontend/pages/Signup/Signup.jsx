@@ -49,6 +49,9 @@ import {
 // Add AuthContext import
 import { useAuth } from '../../../auth/AuthContext';
 
+// Update imports
+import { userOperations, createUserDataStructure } from '../../../auth/userManager';
+
 // Helper function to generate a unique user ID from first and last name
 // Parameters:
 // - firstName: User's first name
@@ -84,13 +87,13 @@ const Signup = () => {
     firstName: '',
     lastName: '',
     email: '',
+    phoneCode: '+44',
     phoneNumber: '',
     password: '',
   });
 
   // UI state management
   const [showPassword, setShowPassword] = useState(false);  // Toggle password visibility
-  const [countryCode, setCountryCode] = useState('+44');   // Phone country code
   const [currentTestimonial, setCurrentTestimonial] = useState(0);  // Current testimonial index
   const [isSliding, setIsSliding] = useState(false);       // Testimonial slide animation state
   const [errors, setErrors] = useState({});                // Form validation errors
@@ -141,30 +144,30 @@ const Signup = () => {
     }
     
     setIsLoading(true);
+    setErrors({});
     
     try {
-      // Use AuthContext signup with displayName
-      await signup(
+      console.log('Starting signup submission...');
+      const fullPhoneNumber = `${formData.phoneCode}${formData.phoneNumber.replace(/\D/g, '')}`;
+      
+      // Create auth user and initial profile using AuthContext signup
+      const result = await signup(
         formData.email, 
         formData.password,
         {
-          lastName: formData.lastName,
           firstName: formData.firstName,
+          lastName: formData.lastName,
           displayName: `${formData.firstName} ${formData.lastName}`,
-          phoneNumber: `${countryCode}${formData.phoneNumber}`,
-          createdAt: new Date().toISOString(),
-          lastLoginAt: new Date().toISOString(),
-          isEmailVerified: false,
-          status: 'active'
+          phoneNumber: fullPhoneNumber,
+          provider: 'email'
         }
       );
       
-      // Navigate to profile type selection
+      // Navigate directly after successful signup
       navigate('/profile-type', { replace: true });
       
     } catch (error) {
-      console.error('Signup error:', error);
-      // Handle specific Firebase errors
+      console.error('Signup submission error:', error);
       const errorMessage = 
         error.code === 'auth/email-already-in-use' ? 'This email is already registered. Please login instead.' :
         error.code === 'auth/invalid-email' ? 'Please enter a valid email address.' :
@@ -186,7 +189,7 @@ const Signup = () => {
     setErrors({}); // Clear any previous errors
     
     try {
-      // For Google signup, the displayName comes from Google profile
+      // Use AuthContext's googleSignIn with isSignUp flag
       const { isNewUser } = await googleSignIn(true);
       
       if (isNewUser) {
@@ -194,8 +197,8 @@ const Signup = () => {
         navigate('/profile-type', { replace: true });
       } else {
         // This shouldn't happen due to our AuthContext checks
-        console.warn('User already exists - redirecting to dashboard');
-        navigate('/dashboard', { replace: true });
+        console.warn('User already exists - redirecting to login');
+        navigate('/login', { replace: true });
       }
     } catch (error) {
       console.error('Google Sign Up error:', error);
@@ -274,11 +277,17 @@ const Signup = () => {
     
     // Phone validation
     const phoneRegex = /^\d{10}$/;
+    // Remove all non-digit characters from phone number
     const cleanPhone = formData.phoneNumber.replace(/\D/g, '');
+    
     if (!cleanPhone) {
       newErrors.phoneNumber = 'Phone number is required';
+    } else if (cleanPhone.length < 10) {
+      newErrors.phoneNumber = 'Phone number is too short';
+    } else if (cleanPhone.length > 15) {
+      newErrors.phoneNumber = 'Phone number is too long';
     } else if (!phoneRegex.test(cleanPhone)) {
-      newErrors.phoneNumber = 'Please enter a valid 10-digit phone number';
+      newErrors.phoneNumber = 'Please enter a valid phone number';
     }
     
     // Password validation
@@ -452,8 +461,9 @@ const Signup = () => {
               <label htmlFor="phoneNumber">Phone number</label>
               <div className="phone-input">
                 <select 
-                  value={countryCode}
-                  onChange={(e) => setCountryCode(e.target.value)}
+                  value={formData.phoneCode}
+                  name="phoneCode"
+                  onChange={handleChange}
                   className="country-code"
                 >
                   <option value="+44">🇬🇧 +44</option>
@@ -473,11 +483,11 @@ const Signup = () => {
                   name="phoneNumber"
                   value={formData.phoneNumber}
                   onChange={handleChange}
-                  placeholder="123-456-7890"
+                  placeholder="Enter phone number"
                   className={errors.phoneNumber ? 'error' : ''}
                 />
-                {errors.phoneNumber && <span className="error-message">{errors.phoneNumber}</span>}
               </div>
+              {errors.phoneNumber && <span className="error-message">{errors.phoneNumber}</span>}
             </div>
 
             <div className="form-group">
@@ -523,10 +533,14 @@ const Signup = () => {
 
             <button 
               type="submit" 
-              className={`create-account-btn ${isLoading || authLoading ? 'loading' : ''}`}
-              disabled={isLoading || authLoading}
+              className={`create-account-btn ${isLoading ? 'loading' : ''}`}
+              disabled={isLoading}
             >
-              <span>{isLoading || authLoading ? '' : 'Create Account'}</span>
+              {isLoading ? (
+                <span className="loading-text">Creating Account...</span>
+              ) : (
+                <span>Create Account</span>
+              )}
             </button>
             
             {errors.submit && (
