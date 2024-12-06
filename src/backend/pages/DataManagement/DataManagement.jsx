@@ -1,125 +1,232 @@
 /**
  * DataManagement Component
- * 
- * A comprehensive data management interface with the following features:
- * - Tabbed navigation for different data sections
- * - Personal information management
- * - Educational details
- * - Additional information
- * - Verification process
- * - Progress tracking with DataSubmission component
+ * Features:
+ * - Dynamic sections based on user's profile type
+ * - Questions from admin configuration
+ * - Progress tracking
  */
 
 import React, { useState, useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom';
-
-// Icon imports for tab navigation
-import { 
-  FiUser,     // Personal tab icon
-  FiBook,     // Education tab icon
-  FiFileText, // Additional tab icon
-  FiShield    // Verification tab icon
-} from 'react-icons/fi';
-
-// Tab section component imports
-import Personal from './sections/TabsSection/Personal';
-import Education from './sections/TabsSection/Education';
-import WorkExperience from './sections/TabsSection/WorkExperience';
-import Verification from './sections/TabsSection/Verification';
-
-// Reusable component imports
+import { useSearchParams, useNavigate } from 'react-router-dom';
+import { useAuth } from '../../../auth/AuthContext';
+import { doc, getDoc } from 'firebase/firestore';
+import { db } from '../../../firebase/config';
 import DataSubmission from '../Dashboard/sections/DataSubmission/DataSubmission';
-
-// Styles import
 import './DataManagement.css';
+import SectionForm from './SectionForm/SectionForm';
+import { eventEmitter, EVENTS } from '../../../services/eventEmitter';
 
 const DataManagement = () => {
-  const [searchParams] = useSearchParams();
-  const [activeTab, setActiveTab] = useState('Personal');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const { user } = useAuth();
+  const [sections, setSections] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [activeTab, setActiveTab] = useState(searchParams.get('tab') || '');
 
-  // Handle URL parameters for active tab
+  // Fetch sections data
+  const fetchSections = async () => {
+    try {
+      setLoading(true);
+      if (!user?.profile?.userType) {
+        setSections([]);
+        setLoading(false);
+        return;
+      }
+
+      const profilesDocRef = doc(db, 'admin', 'profiles');
+      const profilesDoc = await getDoc(profilesDocRef);
+      
+      if (!profilesDoc.exists()) {
+        setSections([]);
+        setLoading(false);
+        return;
+      }
+
+      const data = profilesDoc.data();
+      const userProfileType = data.profileTypes[user.profile.userType];
+      
+      if (!userProfileType?.sections) {
+        setSections([]);
+        setLoading(false);
+        return;
+      }
+
+      const sectionsArray = Object.entries(userProfileType.sections).map(([id, section]) => ({
+        id,
+        ...section
+      }));
+
+      setSections(sectionsArray);
+      
+      // Set initial active tab if not set
+      if (!activeTab && sectionsArray.length > 0) {
+        setActiveTab(sectionsArray[0].id);
+        setSearchParams({ tab: sectionsArray[0].id });
+      }
+    } catch (error) {
+      console.error('Error fetching sections:', error);
+      setError('Failed to load sections. Please try again later.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Initial fetch
   useEffect(() => {
-    const tab = searchParams.get('tab');
-    if (tab) {
-      // Capitalize first letter for matching tab names
-      const formattedTab = tab.charAt(0).toUpperCase() + tab.slice(1);
-      setActiveTab(formattedTab);
+    fetchSections();
+  }, [user?.profile?.userType]);
+
+  // Listen for section updates
+  useEffect(() => {
+    const unsubscribe = eventEmitter.on(EVENTS.SECTION_DATA_UPDATED, () => {
+      console.log('Section data update event received');
+      fetchSections();
+    });
+
+    return () => {
+      unsubscribe();
+    };
+  }, []);
+
+  // Update URL when tab changes
+  const handleTabChange = (tabId) => {
+    setActiveTab(tabId);
+    setSearchParams({ tab: tabId });
+  };
+
+  // Listen for URL changes
+  useEffect(() => {
+    const tabFromUrl = searchParams.get('tab');
+    if (tabFromUrl && tabFromUrl !== activeTab) {
+      setActiveTab(tabFromUrl);
     }
   }, [searchParams]);
 
-  /**
-   * Tab configuration array
-   * Defines the available tabs in the interface
-   */
-  const tabs = ['Personal', 'Education', 'Work Experience', 'Verification'];
-
-  /**
-   * Icon mapping object
-   * Maps each tab to its corresponding icon component
-   */
-  const tabIcons = {
-    Personal: <FiUser className="w-4 h-4" />,
-    Education: <FiBook className="w-4 h-4" />,
-    'Work Experience': <FiFileText className="w-4 h-4" />,
-    Verification: <FiShield className="w-4 h-4" />
-  };
-
-  /**
-   * Render appropriate content based on active tab
-   * @returns {JSX.Element} The component for the active tab
-   */
+  // Render appropriate content based on active tab
   const renderTabContent = () => {
-    switch (activeTab) {
-      case 'Personal':
-        return <Personal />;
-      case 'Education':
-        return <Education />;
-      case 'Work Experience':
-        return <WorkExperience />;
-      case 'Verification':
-        return <Verification />;
-      default:
-        return null;
+    const activeSection = sections.find(section => section.id === activeTab);
+    if (!activeSection || !user) {
+      console.log('No active section or user found');
+      return null;
     }
+
+    // Get the saved form data from user's profile sections
+    const savedFormData = {};
+    const sectionData = user?.profileSections?.[activeSection.id];
+    
+    console.log('Active section:', activeSection);
+    console.log('Section data:', sectionData);
+
+    // Initialize form data with default values for all questions
+    if (activeSection.questions) {
+      activeSection.questions.forEach(question => {
+        if (!question || !question.id) {
+          console.log('Invalid question found:', question);
+          return;
+        }
+
+        try {
+          if (question.type === 'repeater') {
+            // Initialize repeater fields with at least one empty group
+            const repeaterData = [];
+            const existingData = sectionData?.questions?.find(q => q.id === question.id)?.answer;
+
+            if (Array.isArray(existingData) && existingData.length > 0) {
+              // Map existing data and ensure all required fields exist
+              repeaterData.push(...existingData.map(group => ({
+                ...Object.fromEntries(
+                  (question.repeaterFields || []).map(field => [
+                    field.id,
+                    field.type === 'multipleChoice' ? [] : ''
+                  ])
+                ),
+                ...group
+              })));
+            } else {
+              // Create one empty group with all fields initialized
+              repeaterData.push(
+                Object.fromEntries(
+                  (question.repeaterFields || []).map(field => [
+                    field.id,
+                    field.type === 'multipleChoice' ? [] : ''
+                  ])
+                )
+              );
+            }
+            savedFormData[question.id] = repeaterData;
+          } else if (question.type === 'multipleChoice') {
+            const answer = sectionData?.questions?.find(q => q.id === question.id)?.answer;
+            savedFormData[question.id] = Array.isArray(answer) ? answer : [];
+          } else if (question.type === 'file') {
+            savedFormData[question.id] = sectionData?.questions?.find(q => q.id === question.id)?.answer || null;
+          } else {
+            savedFormData[question.id] = sectionData?.questions?.find(q => q.id === question.id)?.answer || '';
+          }
+        } catch (error) {
+          console.error('Error initializing question:', question.id, error);
+          // Initialize with a safe default value based on question type
+          savedFormData[question.id] = question.type === 'multipleChoice' ? [] : '';
+        }
+      });
+    }
+
+    console.log('Initialized form data:', savedFormData);
+
+    return (
+      <div className="tab-pane">
+        <SectionForm 
+          section={activeSection}
+          profileType={user.userType}
+          formData={savedFormData}
+        />
+      </div>
+    );
   };
+
+  if (loading && !sections.length) {
+    return (
+      <div className="data-management">
+        <main className="main-content">
+          <div className="loading-state">
+            <div className="loading-spinner"></div>
+          </div>
+        </main>
+        <DataSubmission />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="data-management">
+        <div className="error-state">
+          <p>{error}</p>
+          <button onClick={() => window.location.reload()}>Retry</button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="data-management">
-      {/* Main content area */}
       <main className="main-content">
-        {/* Tab navigation */}
         <nav className="tab-nav">
-          {tabs.map(tabId => (
+          {sections.map(section => (
             <button
-              key={tabId}
-              className={`tab-button ${activeTab === tabId ? 'active' : ''}`}
-              onClick={() => setActiveTab(tabId)}
+              key={section.id}
+              className={`tab-button ${activeTab === section.id ? 'active' : ''}`}
+              onClick={() => handleTabChange(section.id)}
             >
-              {tabIcons[tabId]}
-              {tabId}
+              {section.label}
             </button>
           ))}
         </nav>
-
-        {/* Tab content container */}
-        <div className="tab-content-container">
-          {renderTabContent()}
-        </div>
+        {renderTabContent()}
       </main>
-
-      {/* Progress tracking sidebar */}
       <DataSubmission />
     </div>
   );
 };
 
-/**
- * Export the DataManagement component
- * This component provides:
- * - Tabbed interface for data management
- * - Progress tracking
- * - Form validation
- * - Data persistence
- * - Responsive design
- */
 export default DataManagement; 

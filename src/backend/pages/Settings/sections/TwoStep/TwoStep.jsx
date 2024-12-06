@@ -15,10 +15,10 @@ import { useAuth } from '../../../../../auth/AuthContext';
 import { doc, updateDoc, getDoc } from 'firebase/firestore';
 import { db } from '../../../../../firebase/config';
 import { authenticator } from 'otplib';
-import { useToast } from '../../../../components/Toast/ToastContext';
+import { useToast } from '../../../../../components/Toast/ToastContext';
 import './TwoStep.css';
-import LoadingSpinner from '../../../../components/LoadingSpinner/LoadingSpinner';
-import SkeletonLoading from './components/SkeletonLoading/SkeletonLoading';
+import LoadingSpinner from '../../../../../components/LoadingSpinner/LoadingSpinner';
+import SkeletonLoading from '../../../../../components/SkeletonLoading/SkeletonLoading';
 
 const TwoStep = () => {
   const { user } = useAuth();
@@ -31,26 +31,50 @@ const TwoStep = () => {
   const toast = useToast();
   const [loading, setLoading] = useState(true);
 
+  // Check if user signed up with Google
+  const isGoogleUser = user?.providerData?.[0]?.providerId === 'google.com' || user?.profile?.provider === 'google.com';
+
+  // If Google user, show message instead of 2FA options
+  if (isGoogleUser) {
+    return (
+      <div className="two-step-section">
+        <h2 className="section-title">Two-Step Authentication</h2>
+        <div className="two-step-content">
+          <div className="security-status">
+            <FiShield className="status-icon disabled" />
+            <div className="status-info">
+              <h3 className="status-title">Not Available for Google Sign-In</h3>
+              <p className="status-description">
+                Two-step authentication is not available for accounts using Google Sign-In as Google already provides its own security features.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   // Fetch 2FA status on component mount
   useEffect(() => {
     const fetch2FAStatus = async () => {
       try {
         setLoading(true);
-        if (user?.uid) {
-          const userDoc = await getDoc(doc(db, 'users', user.uid));
+        if (user?.profile?.authUid) {
+          const userDoc = await getDoc(doc(db, 'users', user.profile.authUid));
           const userData = userDoc.data();
           setIsEnabled(userData?.twoFactorAuth?.enabled || false);
           setSecretKey(userData?.twoFactorAuth?.secret || '');
         }
       } catch (error) {
         console.error('Error fetching 2FA status:', error);
+        toast.showError('Failed to fetch 2FA status');
       } finally {
         setLoading(false);
       }
     };
 
     fetch2FAStatus();
-  }, [user]);
+  }, [user?.profile?.authUid]);
 
   if (loading) {
     return <SkeletonLoading />;
@@ -72,6 +96,10 @@ const TwoStep = () => {
       setIsVerifying(true);
       setError('');
       
+      if (!user?.profile?.authUid) {
+        throw new Error('User not found');
+      }
+
       // Verify the code using otplib
       const isValid = authenticator.verify({
         token: verificationCode,
@@ -80,7 +108,7 @@ const TwoStep = () => {
 
       if (isValid) {
         // Update user's 2FA status in Firebase
-        await updateDoc(doc(db, 'users', user.uid), {
+        await updateDoc(doc(db, 'users', user.profile.authUid), {
           twoFactorAuth: {
             enabled: true,
             secret: secretKey,
@@ -107,7 +135,11 @@ const TwoStep = () => {
 
   const handleDisable2FA = async () => {
     try {
-      await updateDoc(doc(db, 'users', user.uid), {
+      if (!user?.profile?.authUid) {
+        throw new Error('User not found');
+      }
+
+      await updateDoc(doc(db, 'users', user.profile.authUid), {
         twoFactorAuth: {
           enabled: false,
           secret: null,
@@ -125,7 +157,7 @@ const TwoStep = () => {
     }
   };
 
-  const qrCodeUrl = `otpauth://totp/Feedo:${user?.email}?secret=${secretKey}&issuer=Feedo`;
+  const qrCodeUrl = `otpauth://totp/Feedo:${user?.profile?.email}?secret=${secretKey}&issuer=Feedo`;
 
   const NotificationToggle = ({ enabled, onClick }) => (
     <button 
@@ -220,7 +252,7 @@ const TwoStep = () => {
                   >
                     {isVerifying ? (
                       <span className="flex items-center justify-center gap-2">
-                        <LoadingSpinner size="xs" color="text-white" />
+                        <LoadingSpinner size="xs" color="text-white" isBackend={true} />
                         <span>Verifying...</span>
                       </span>
                     ) : (

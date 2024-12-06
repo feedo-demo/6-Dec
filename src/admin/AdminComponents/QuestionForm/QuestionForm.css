@@ -1,0 +1,227 @@
+/**
+ * QuestionForm Component Styles
+ * 
+ * Features:
+ * - Clean, compact form layout
+ * - Input field styling
+ * - Validation states
+ * - Option management
+ */
+
+ .question-form {
+  @apply bg-white p-4 rounded-lg space-y-4;
+}
+
+/* Form Groups */
+.form-group {
+  @apply space-y-1;
+}
+
+.form-label {
+  @apply block text-sm font-medium text-gray-700;
+}
+
+/* Input Fields */
+.form-input {
+  @apply w-full px-3 py-1.5 border border-gray-300 rounded-lg
+         focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500
+         transition-all duration-200 text-sm;
+}
+
+.form-input.error {
+  @apply border-red-500 focus:ring-red-500/20 focus:border-red-500;
+}
+
+.form-textarea {
+  @apply w-full px-3 py-1.5 border border-gray-300 rounded-lg
+         focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500
+         transition-all duration-200 text-sm
+         min-h-[80px] resize-y;
+}
+
+/* Checkbox Styling */
+.form-checkbox {
+  @apply flex items-center gap-3 text-sm text-gray-700 mt-2 p-3
+         bg-gray-50 rounded-lg border border-gray-200;
+}
+
+.form-checkbox input[type="checkbox"] {
+  @apply w-4 h-4 text-blue-600 rounded
+         border-gray-300 focus:ring-blue-500
+         cursor-pointer mr-1;
+}
+
+.form-checkbox span {
+  @apply font-medium ml-1;
+}
+
+.form-checkbox .info-text {
+  @apply text-xs text-gray-500 ml-7;
+}
+
+/* Options Management */
+.options-container {
+  @apply space-y-2;
+}
+
+.option-row {
+  @apply flex items-center gap-2;
+}
+
+.remove-option-btn {
+  @apply p-1.5 text-gray-500 hover:text-red-500
+         focus:outline-none transition-colors duration-200
+         disabled:opacity-50 disabled:cursor-not-allowed;
+}
+
+.add-option-btn {
+  @apply mt-2 text-sm;
+}
+
+/* Validation Fields */
+.validation-fields {
+  @apply p-3 bg-gray-50 rounded-lg border border-gray-200 mt-4;
+}
+
+.validation-title {
+  @apply text-sm font-medium text-gray-700 mb-3;
+}
+
+.validation-grid {
+  @apply w-full;
+}
+
+.validation-row {
+  @apply grid grid-cols-2 gap-4;
+}
+
+/* Error Messages */
+.error-message {
+  @apply text-xs text-red-500 mt-1;
+}
+
+.submit-error {
+  @apply p-2 bg-red-50 border border-red-200 rounded-lg
+         text-red-600 text-center text-sm;
+}
+
+/* Form Actions */
+.form-actions {
+  @apply flex justify-end gap-3 mt-6;
+}
+
+.form-actions button:first-child {
+  @apply px-6 py-2 rounded-lg border border-gray-300
+         text-gray-700 hover:bg-gray-50
+         transition-all duration-200;
+}
+
+/* Responsive Design */
+@media (max-width: 640px) {
+  .validation-grid {
+    @apply grid-cols-1;
+  }
+
+  .form-actions {
+    @apply flex-col space-y-2;
+  }
+
+  .form-actions button {
+    @apply w-full;
+  }
+}
+
+/* Animations */
+.form-input:focus,
+.form-textarea:focus {
+  @apply transform scale-[1.01];
+}
+
+/* Required Field Indicator */
+.required-field::after {
+  content: "*";
+  @apply text-red-500 ml-1;
+}
+
+/* Update submit button styles */
+.submit-button {
+  @apply px-6 py-2 rounded-lg font-medium text-white
+         relative overflow-hidden flex items-center justify-center gap-2
+         min-w-[120px] h-[40px]
+         transition-all duration-300 transform;
+  background: linear-gradient(135deg, #0093E9 0%, #80D0C7 100%);
+}
+
+.submit-button:hover:not(:disabled) {
+  @apply shadow-lg -translate-y-0.5;
+}
+
+.submit-button:active:not(:disabled) {
+  @apply translate-y-0;
+}
+
+.submit-button:disabled {
+  @apply cursor-not-allowed opacity-80;
+}
+
+/* Repeater Fields Styles */
+.group-fields-section {
+  @apply bg-white rounded-lg p-6 border border-gray-200 mt-6;
+}
+
+.section-title {
+  @apply text-lg font-medium text-gray-800 mb-2;
+}
+
+.group-field-item {
+  @apply bg-gray-50 rounded-lg border border-gray-200 p-4;
+}
+
+.field-header {
+  @apply flex items-start gap-4;
+}
+
+.drag-handle {
+  @apply cursor-grab p-2 hover:bg-gray-200 rounded;
+}
+
+.field-content {
+  @apply flex-1;
+}
+
+.remove-field-btn {
+  @apply p-2 hover:bg-gray-200 rounded
+         transition-colors duration-200;
+}
+
+.group-fields {
+  @apply bg-gray-50 rounded-lg border border-gray-200 p-4;
+}
+
+/* Animation for adding new fields */
+.group-field-item {
+  animation: slideDown 0.2s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Drag and drop styles */
+.group-field-item.dragging {
+  @apply opacity-50 border-2 border-blue-500 
+         shadow-lg cursor-grabbing;
+}
+
+.group-field-item.drag-over {
+  @apply border-2 border-blue-500 transform 
+         scale-[1.02] bg-blue-50;
+}
+ 

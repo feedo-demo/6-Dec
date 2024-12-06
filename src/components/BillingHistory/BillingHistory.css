@@ -1,0 +1,129 @@
+/**
+ * BillingHistory Component Styles
+ * 
+ * Features:
+ * - List layout and spacing
+ * - Invoice item styling
+ * - Status indicators
+ * - Download button
+ * - Empty state styling
+ * - Hover effects
+ * - Responsive design
+ */
+
+.billing-history {
+  @apply mt-8;
+}
+
+.subsection-title {
+  @apply text-lg font-medium text-gray-700 mb-4;
+}
+
+.history-list {
+  @apply space-y-3;
+}
+
+.history-item {
+  @apply flex items-center justify-between p-4 
+         border border-gray-100 rounded-lg
+         hover:border-gray-200 transition-all duration-300;
+}
+
+.invoice-details {
+  @apply flex flex-col;
+  min-width: 200px;
+}
+
+.invoice-date {
+  @apply font-medium text-gray-700 text-sm;
+  white-space: nowrap;
+  line-height: 1.2;
+}
+
+.invoice-id {
+  @apply text-sm text-gray-500;
+}
+
+.invoice-amount {
+  @apply flex items-center gap-1 font-medium text-gray-700;
+}
+
+.amount-icon {
+  @apply text-gray-400;
+}
+
+.invoice-status {
+  @apply flex items-center text-sm;
+  gap: 1px;
+}
+
+.invoice-status.success {
+  @apply text-green-600;
+}
+
+.status-icon {
+  @apply w-3.5 h-3.5;
+  margin-right: -1px;
+}
+
+.download-btn {
+  @apply flex items-center gap-2 px-3 py-1.5 
+         text-gray-600 hover:text-blue-500
+         transition-colors duration-300;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .history-item {
+    @apply flex-col gap-3;
+  }
+  
+  .download-btn {
+    @apply w-full justify-center;
+  }
+}
+
+/* Empty State */
+.empty-history {
+  @apply flex flex-col items-center justify-center p-8 
+         bg-gray-50 rounded-lg border border-gray-100
+         text-center;
+}
+
+.empty-icon {
+  @apply w-12 h-12 text-gray-400 mb-3;
+}
+
+.empty-text {
+  @apply text-gray-600 font-medium mb-1;
+}
+
+.empty-subtext {
+  @apply text-sm text-gray-500;
+}
+
+.history-header {
+  @apply flex items-center justify-between mb-4;
+}
+
+.clear-history-btn {
+  @apply flex items-center gap-2 px-3 py-1.5 
+         text-gray-600 hover:text-red-500
+         bg-gray-50 hover:bg-red-50
+         rounded-lg text-sm font-medium
+         transition-all duration-200;
+}
+
+.clear-icon {
+  @apply w-4 h-4;
+}
+
+.clear-history-btn:hover {
+  @apply transform -translate-y-0.5;
+  box-shadow: 0 2px 4px rgba(239, 68, 68, 0.1);
+}
+
+.clear-history-btn:active {
+  @apply transform translate-y-0;
+}
+  

@@ -13,93 +13,73 @@ import { db } from '../firebase/config';
 import { doc, getDoc, setDoc, updateDoc, deleteDoc, serverTimestamp, writeBatch } from 'firebase/firestore';
 
 // User data transformation functions
-export const transformUserData = (authUser, firestoreData, isPending = false) => {
-  if (!firestoreData) return null;
-
-  console.log('Transform Input:', { 
-    authUser: JSON.parse(JSON.stringify(authUser)), 
-    firestoreData: JSON.parse(JSON.stringify(firestoreData)), 
-    isPending 
-  });
+export const transformUserData = (authUser, userData, isPending = false) => {
+  if (!authUser || !userData) return null;
 
   // Get first name and last name with proper fallbacks
-  const firstName = firestoreData.profile?.firstName || 
-                   firestoreData.metadata?.firstName || 
-                   firestoreData.personal?.firstName || 
-                   authUser.displayName?.split(' ')[0] || 
+  const firstName = userData?.profile?.firstName || 
+                   userData?.metadata?.firstName || 
+                   userData?.firstName || 
+                   authUser?.displayName?.split(' ')[0] || 
                    '';
   
-  const lastName = firestoreData.profile?.lastName || 
-                  firestoreData.metadata?.lastName || 
-                  firestoreData.personal?.lastName || 
-                  authUser.displayName?.split(' ').slice(1).join(' ') || 
+  const lastName = userData?.profile?.lastName || 
+                  userData?.metadata?.lastName || 
+                  userData?.lastName || 
+                  authUser?.displayName?.split(' ').slice(1).join(' ') || 
                   '';
 
   // Create full name from first and last name
-  const fullName = firestoreData.profile?.fullName || 
+  const fullName = userData.profile?.fullName || 
                   `${firstName} ${lastName}`.trim() || 
                   authUser.displayName || 
                   '';
 
-  // Ensure we have a proper profile structure
-  const profile = {
-    authUid: authUser.uid,
-    email: firestoreData.profile?.email || authUser.email,
-    firstName,
-    lastName,
-    fullName,
-    phoneNumber: firestoreData.profile?.phoneNumber || firestoreData.metadata?.phoneNumber || '',
-    professionalSummary: firestoreData.profile?.professionalSummary || '',
-    location: firestoreData.profile?.location || firestoreData.metadata?.location || '',
-    photoURL: firestoreData.profile?.photoURL || authUser.photoURL || '',
-    provider: firestoreData.profile?.provider || authUser.providerData[0]?.providerId || 'email',
-    userType: firestoreData.profile?.userType || firestoreData.metadata?.userType || '',
-    isEmailVerified: authUser.emailVerified,
-    createdAt: firestoreData.metadata?.createdAt || firestoreData.createdAt,
-    lastLoginAt: firestoreData.metadata?.lastLoginAt || firestoreData.lastLoginAt,
-    lastUpdated: firestoreData.profile?.lastUpdated || serverTimestamp()
-  };
+  // Get provider from auth user's provider data
+  const provider = authUser.providerData?.[0]?.providerId || userData.profile?.provider || 'password';
 
-  // Create education data structure
-  const education = {
-    degreeLevel: firestoreData.education?.degreeLevel || '',
-    fieldOfStudy: firestoreData.education?.fieldOfStudy || '',
-    institutionName: firestoreData.education?.institutionName || '',
-    graduationDate: firestoreData.education?.graduationDate || null,
-    gpa: firestoreData.education?.gpa || null,
-    academicAchievements: firestoreData.education?.academicAchievements || '',
-    lastUpdated: firestoreData.education?.lastUpdated || null
-  };
+  // For Google users, always use auth user's photo URL if available
+  const photoURL = provider === 'google.com' && authUser.photoURL 
+    ? authUser.photoURL 
+    : userData.profile?.photoURL || authUser.photoURL || '';
 
-  console.log('Created Profile:', JSON.parse(JSON.stringify(profile)));
-
-  // Create the complete transformed data structure
+  // Transform the data ensuring userType is properly set
   const transformedData = {
-    ...authUser,
-    profile,
-    education, // Add education data to transformed structure
-    workExperience: firestoreData.workExperience || [],
-    metadata: {
-      ...firestoreData.metadata,
+    profile: {
+      authUid: authUser.uid,
+      email: userData.profile?.email || authUser.email,
       firstName,
       lastName,
-      email: authUser.email,
-      phoneNumber: profile.phoneNumber,
-      location: profile.location
+      fullName,
+      phoneNumber: userData.profile?.phoneNumber || '',
+      professionalSummary: userData.profile?.professionalSummary || '',
+      location: userData.profile?.location || '',
+      photoURL,
+      provider,
+      userType: userData.profile?.userType || userData.userType || '',
+      isEmailVerified: authUser.emailVerified,
+      createdAt: userData.profile?.createdAt || null,
+      lastLoginAt: userData.profile?.lastLoginAt || null,
+      lastUpdated: userData.profile?.lastUpdated || null
     },
-    settings: firestoreData.settings || {
-      notifications: true,
-      emailPreferences: {
-        marketing: true,
-        updates: true,
-        opportunities: true
-      },
-      theme: 'light'
+    metadata: {
+      ...userData.metadata,
+      userType: userData.metadata?.userType || userData.userType || ''
     },
-    isPending
+    profileSections: userData.profileSections || {},
+    settings: userData.settings || {},
+    userType: userData.userType || userData.profile?.userType || '', // Ensure top-level userType is set
+    isPending: typeof isPending === 'boolean' ? isPending : !!userData.isPending
   };
 
-  console.log('Transformed Output:', JSON.parse(JSON.stringify(transformedData)));
+  // Debug log
+  console.log('Transformed User Data:', {
+    input: { authUser, userData, isPending },
+    output: transformedData,
+    provider,
+    photoURL
+  });
+
   return transformedData;
 };
 
@@ -168,6 +148,13 @@ export const userOperations = {
         updateData[`metadata.${key}`] = value;
       });
     }
+
+    // Handle profileSections updates
+    if (updates.profileSections) {
+      Object.entries(updates.profileSections).forEach(([sectionId, data]) => {
+        updateData[`profileSections.${sectionId}`] = data;
+      });
+    }
     
     // Handle section updates
     if (updates.personal) {
@@ -177,9 +164,8 @@ export const userOperations = {
       updateData['personal.lastUpdated'] = timestamp;
     }
     
-    // Handle education updates - Updated this section
+    // Handle education updates
     if (updates.education) {
-      // Directly set all education fields
       updateData.education = {
         ...updates.education,
         lastUpdated: timestamp
@@ -214,12 +200,64 @@ export const userOperations = {
   // Convert pending user to full user
   async convertPendingToUser(uid, userData) {
     try {
-      // Create a new batch
       const batch = writeBatch(db);
+      
+      // Get the profile type sections from admin config
+      const profilesDocRef = doc(db, 'admin', 'profiles');
+      const profilesDoc = await getDoc(profilesDocRef);
+      
+      if (!profilesDoc.exists()) {
+        throw new Error('Admin profiles configuration not found');
+      }
+
+      const profileTypes = profilesDoc.data().profileTypes;
+      const userProfileType = profileTypes[userData.userType];
+      
+      if (!userProfileType?.sections) {
+        throw new Error('No sections found for profile type');
+      }
+
+      // Initialize profileSections with empty data
+      const profileSections = {};
+      
+      Object.entries(userProfileType.sections).forEach(([sectionId, section]) => {
+        // Initialize profileSections with section structure and empty answers
+        profileSections[sectionId] = {
+          id: sectionId,
+          label: section.label,
+          questions: section.questions?.map(question => ({
+            id: question.id,
+            type: question.type,
+            question: question.question,
+            required: question.required,
+            answer: null
+          })) || []
+        };
+      });
+
+      // Ensure we're not overriding the selected user type and include sections
+      const updatedUserData = {
+        ...userData,
+        isPending: false,
+        metadata: {
+          ...userData.metadata,
+          convertedAt: serverTimestamp(),
+          lastUpdatedAt: serverTimestamp(),
+          isPending: false,
+          userType: userData.userType
+        },
+        profile: {
+          ...userData.profile,
+          lastUpdated: serverTimestamp(),
+          userType: userData.userType
+        },
+        userType: userData.userType,
+        profileSections // Add initialized sections
+      };
       
       // Create new user document
       const userRef = doc(db, 'users', uid);
-      batch.set(userRef, userData);
+      batch.set(userRef, updatedUserData);
       
       // Delete pending document
       const pendingRef = doc(db, 'pending_users', uid);
@@ -227,7 +265,26 @@ export const userOperations = {
       
       // Commit the batch
       await batch.commit();
-      return userData;
+
+      // Wait for a moment to ensure Firestore is synchronized
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      // Get the fresh data after the update
+      const freshUserDoc = await getDoc(userRef);
+      if (!freshUserDoc.exists()) {
+        throw new Error('Failed to verify user data update');
+      }
+
+      // Return the fresh data from Firestore with local timestamps
+      const freshData = freshUserDoc.data();
+      return {
+        ...freshData,
+        metadata: {
+          ...freshData.metadata,
+          convertedAt: new Date(),
+          lastUpdatedAt: new Date()
+        }
+      };
     } catch (error) {
       console.error('Error converting pending user:', error);
       throw error;
@@ -246,15 +303,23 @@ export const userOperations = {
       const pendingRef = doc(db, 'pending_users', uid);
       const timestamp = serverTimestamp();
       
-      // Add timestamps to userData
+      // Add timestamps to userData and ensure profile data is preserved
       const userDataWithTimestamp = {
         ...userData,
         metadata: {
           ...userData.metadata,
           createdAt: timestamp,
           lastLoginAt: timestamp
+        },
+        profile: {
+          ...userData.profile,
+          lastUpdated: timestamp,
+          // Ensure photoURL is preserved
+          photoURL: userData.profile?.photoURL || ''
         }
       };
+
+      console.log('Creating pending user with data:', userDataWithTimestamp);
 
       await setDoc(pendingRef, userDataWithTimestamp);
       return userDataWithTimestamp;
@@ -262,68 +327,121 @@ export const userOperations = {
       console.error('Error creating pending user:', error);
       throw error;
     }
+  },
+
+  // Update user type
+  async updateUserType(uid, selectedType) {
+    try {
+      // Get current user data
+      const { data, isPending } = await this.getUserData(uid);
+      
+      if (!data) throw new Error('No user data found');
+
+      // Get the profile type sections from admin config
+      const profilesDocRef = doc(db, 'admin', 'profiles');
+      const profilesDoc = await getDoc(profilesDocRef);
+      
+      if (!profilesDoc.exists()) {
+        throw new Error('Admin profiles configuration not found');
+      }
+
+      const profileTypes = profilesDoc.data().profileTypes;
+      if (!profileTypes || !profileTypes[selectedType]) {
+        throw new Error(`Profile type ${selectedType} not found`);
+      }
+
+      const userProfileType = profileTypes[selectedType];
+      
+      // Initialize profileSections with empty data
+      const profileSections = {};
+      
+      // Only process sections if they exist
+      if (userProfileType.sections) {
+        Object.entries(userProfileType.sections).forEach(([sectionId, section]) => {
+          // Initialize profileSections with section structure and empty answers
+          profileSections[sectionId] = {
+            id: sectionId,
+            label: section.label,
+            questions: section.questions?.map(question => ({
+              id: question.id,
+              type: question.type,
+              question: question.question,
+              required: question.required,
+              answer: null
+            })) || []
+          };
+        });
+      }
+
+      // Update the user type at all required levels
+      const updatedData = {
+        ...data,
+        userType: selectedType,
+        profile: {
+          ...data.profile,
+          userType: selectedType,
+          userTypeLabel: userProfileType.label || selectedType
+        },
+        metadata: {
+          ...data.metadata,
+          userType: selectedType,
+          lastUpdatedAt: serverTimestamp()
+        },
+        profileSections
+      };
+
+      // If user is pending, convert them to full user
+      if (isPending) {
+        return await this.convertPendingToUser(uid, updatedData);
+      } else {
+        // Otherwise just update the existing user
+        const userRef = doc(db, 'users', uid);
+        await updateDoc(userRef, updatedData);
+        return updatedData;
+      }
+    } catch (error) {
+      console.error('Error updating user type:', error);
+      throw error;
+    }
   }
 };
 
 // Helper functions
-export const createUserDataStructure = (authUser, additionalData = {}, userType = null) => {
-  const timestamp = serverTimestamp();
-  
-  // Get first and last name with proper fallbacks
-  const firstName = additionalData.firstName || 
-                   authUser.displayName?.split(' ')[0] || 
-                   '';
-  
-  const lastName = additionalData.lastName || 
-                  authUser.displayName?.split(' ').slice(1).join(' ') || 
-                  '';
+export const createUserDataStructure = (user, data = {}) => {
+  console.log('Creating user data structure with:', { user, data }); // Debug log
 
-  // Create full name
-  const fullName = `${firstName} ${lastName}`.trim();
+  // Safely extract first and last name
+  const firstName = data?.firstName || user?.displayName?.split(' ')[0] || '';
+  const lastName = data?.lastName || user?.displayName?.split(' ').slice(1).join(' ') || '';
+  const fullName = data?.displayName || `${firstName} ${lastName}`.trim() || user?.displayName || '';
 
-  return {
-    personal: {
-      firstName,    // Add these explicitly
-      lastName,     // Add these explicitly
-      fullName,     // Add these explicitly
-      email: authUser.email || '',
-      phoneNumber: additionalData.phoneNumber || '',
-      professionalSummary: '',
-      location: '',
-      lastUpdated: timestamp
-    },
-    education: {
-      degreeLevel: '',
-      fieldOfStudy: '',
-      institutionName: '',
-      graduationDate: null,
-      gpa: null,
-      academicAchievements: '',
-      lastUpdated: timestamp
-    },
-    workExperience: [],
+  // Get the correct provider
+  const provider = data?.provider || user?.providerData?.[0]?.providerId || 'email';
+
+  // Create base profile structure with safe defaults
+  const profile = {
+    firstName,
+    lastName,
+    fullName,
+    email: user?.email || '',
+    phoneNumber: data?.phoneNumber || '',
+    photoURL: user?.photoURL || data?.photoURL || '',
+    provider,
+    userType: 'pending',
+    lastUpdated: new Date().toISOString()
+  };
+
+  // Create the complete user data structure
+  const userData = {
+    profile,
     metadata: {
-      firstName,    // Add these explicitly
-      lastName,     // Add these explicitly
-      email: authUser.email,
-      phoneNumber: additionalData.phoneNumber || '',
-      createdAt: timestamp,
-      lastLoginAt: timestamp,
-      lastUpdatedAt: timestamp,
-      isEmailVerified: authUser.emailVerified,
-      provider: authUser.providerData[0]?.providerId || 'email',
-      userType: userType || additionalData.userType || '',
-      status: 'active'
-    },
-    profile: {      // Add profile section
+      createdAt: new Date().toISOString(),
+      lastLoginAt: new Date().toISOString(),
+      userType: 'pending',
       firstName,
       lastName,
-      fullName,
-      email: authUser.email,
-      phoneNumber: additionalData.phoneNumber || '',
-      provider: authUser.providerData[0]?.providerId || 'email',
-      authUid: authUser.uid,
-      lastUpdated: timestamp
+      email: user?.email || '',
+      phoneNumber: data?.phoneNumber || ''
     },
     settings: {
       notifications: true,
@@ -333,6 +451,11 @@ export const createUserDataStructure = (authUser, additionalData = {}, userType 
         opportunities: true
       },
       theme: 'light'
-    }
+    },
+    userType: 'pending',
+    profileSections: {}
   };
+
+  console.log('Created user data structure:', userData); // Debug log
+  return userData;
 }; 

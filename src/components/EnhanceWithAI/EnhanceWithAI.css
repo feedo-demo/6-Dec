@@ -1,0 +1,36 @@
+.enhance-btn {
+  @apply inline-flex items-center gap-1.5 px-2 py-1
+         text-xs font-medium text-blue-600
+         bg-blue-50 hover:bg-blue-100
+         rounded-lg transition-all duration-200
+         disabled:opacity-50 disabled:cursor-not-allowed
+         absolute bottom-8 right-3 z-10
+         shadow-sm;
+}
+
+/* Specific positioning for data management page */
+.enhance-btn.data-management-enhance {
+  @apply right-6;
+}
+
+.enhance-btn svg {
+  @apply w-3.5 h-3.5 text-blue-600;
+}
+
+.enhance-btn:hover {
+  @apply text-blue-700 bg-blue-100 -translate-y-0.5 shadow-md;
+}
+
+.enhance-btn:disabled {
+  @apply opacity-50 cursor-not-allowed transform-none shadow-none;
+}
+
+/* Container class for proper button positioning */
+.textarea-with-enhance {
+  @apply relative;
+}
+
+/* Character counter styles */
+.char-count-wrapper {
+  @apply absolute right-3 bottom-3 text-xs text-gray-500;
+} 

@@ -55,7 +55,6 @@ import { applicationOperations } from '../../../applications/applicationManager'
 import {
     FiSearch,      // Search/magnifying glass icon - Used for search functionality
     FiFilter,      // Filter icon - Used for filtering applications
-    FiEye,         // Eye icon - Used for viewing application details
     FiEdit2,       // Pencil icon - Used for editing applications
     FiTrash2,      // Trash bin icon - Used for deleting applications
     FiClock,       // Clock icon - Used for pending/time-related status
@@ -65,11 +64,13 @@ import {
     FiCheckCircle, // Check circle icon - Used for approved/success status
     FiXCircle,     // X circle icon - Used for rejected/error status
     FiPlus,        // Plus icon - Used for adding new applications
-    FiChevronRight // Right arrow icon - Used for navigation/expand actions
 } from 'react-icons/fi';
 import './MyApplications.css';
-import AnimatedNumber from '../../components/Animated/AnimatedNumber';
-import Button from '../../components/Button/Button';
+import AnimatedNumber from '../../../components/Animated/AnimatedNumber';
+import Button from '../../../components/Button/Button';
+import EditApplicationPanel from './sections/EditApplicationPanel/EditApplicationPanel';
+import DeleteConfirmationModal from './sections/DeleteConfirmationModal/DeleteConfirmationModal';
+import LoadingSpinner from '../../../components/LoadingSpinner/LoadingSpinner';
 
 /**
  * Formats a date string into a more readable format
@@ -77,12 +78,34 @@ import Button from '../../components/Button/Button';
  * @returns {string} Formatted date string (e.g., "Mar 15, 2024")
  */
 const formatDate = (dateString) => {
-  const options = { 
-    year: 'numeric', 
-    month: 'short', 
-    day: 'numeric' 
-  };
-  return new Date(dateString).toLocaleDateString('en-US', options);
+  console.log('Formatting date string:', dateString);
+  
+  if (!dateString) {
+    console.log('No date provided');
+    return 'No date set';
+  }
+  
+  try {
+    const date = new Date(dateString);
+    console.log('Parsed date object:', date);
+    
+    if (isNaN(date.getTime())) {
+      console.log('Invalid date detected');
+      return 'Invalid date';
+    }
+    
+    const options = { 
+      year: 'numeric', 
+      month: 'short', 
+      day: 'numeric' 
+    };
+    const formatted = date.toLocaleDateString('en-US', options);
+    console.log('Formatted date:', formatted);
+    return formatted;
+  } catch (error) {
+    console.error('Error formatting date:', error);
+    return 'Invalid date';
+  }
 };
 
 const MyApplications = () => {
@@ -95,6 +118,9 @@ const MyApplications = () => {
   const [filterStatus, setFilterStatus] = useState('all');
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
+  const [editingApplication, setEditingApplication] = useState(null);
+  const [deletingApplication, setDeletingApplication] = useState(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // Fetch applications and stats
   useEffect(() => {
@@ -140,6 +166,13 @@ const MyApplications = () => {
     const randomCategory = categories[Math.floor(Math.random() * categories.length)];
     const randomStatus = statuses[Math.floor(Math.random() * statuses.length)];
 
+    // Generate a random future deadline between 7 and 90 days from now
+    const minDays = 7;
+    const maxDays = 90;
+    const randomDays = Math.floor(Math.random() * (maxDays - minDays + 1)) + minDays;
+    const deadline = new Date();
+    deadline.setDate(deadline.getDate() + randomDays);
+
     // Create demo application data
     const demoApplication = {
       name: `${randomPosition} - ${randomCompany}`,
@@ -149,7 +182,7 @@ const MyApplications = () => {
       progress: Math.floor(Math.random() * 100), // Random progress 0-100
       userId: user.profile.authUid,
       submissionDate: new Date().toISOString(),
-      deadline: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 days from now
+      deadline: deadline.toISOString(), // Random future deadline
       documents: [],
       interviews: [],
       notes: '',
@@ -285,21 +318,21 @@ const MyApplications = () => {
   };
 
   /**
-   * Action handler for viewing application details
-   * Opens a modal or navigates to detail view
-   * @param {number} id - Application ID to view
-   */
-  const handleView = (id) => {
-    console.log('Viewing application:', id);
-  };
-
-  /**
    * Action handler for editing application
    * Opens edit form modal or navigates to edit page
    * @param {number} id - Application ID to edit
    */
   const handleEdit = (id) => {
-    console.log('Editing application:', id);
+    const application = applications.find(app => app.id === id);
+    if (application) {
+      setEditingApplication(application);
+    }
+  };
+
+  const handleUpdateApplication = (updatedApplication) => {
+    setApplications(prev => prev.map(app => 
+      app.id === updatedApplication.id ? updatedApplication : app
+    ));
   };
 
   /**
@@ -319,14 +352,6 @@ const MyApplications = () => {
     setCurrentPage(pageNumber);
   };
 
-  const handlePrevious = () => {
-    setCurrentPage(prev => Math.max(prev - 1, 1));
-  };
-
-  const handleNext = () => {
-    setCurrentPage(prev => Math.min(prev + 1, totalPages));
-  };
-
   /**
    * Handles status filter changes
    * - Updates filter status state
@@ -337,6 +362,44 @@ const MyApplications = () => {
   const handleStatusFilter = (status) => {
     setFilterStatus(status);
     setCurrentPage(1); // Reset to first page when filter changes
+  };
+
+  // Handle delete click
+  const handleDeleteClick = (application) => {
+    setDeletingApplication(application);
+  };
+
+  // Handle delete confirmation
+  const handleDeleteConfirm = async () => {
+    if (!deletingApplication) return;
+
+    try {
+      setIsDeleting(true);
+      await applicationOperations.deleteApplication(deletingApplication.id);
+      
+      // Update local state
+      setApplications(prev => prev.filter(app => app.id !== deletingApplication.id));
+      
+      // Update stats
+      setStats(prev => ({
+        ...prev,
+        total: prev.total - 1,
+        [deletingApplication.status]: prev[deletingApplication.status] - 1
+      }));
+
+      // Close modal
+      setDeletingApplication(null);
+    } catch (err) {
+      console.error('Error deleting application:', err);
+      setError('Failed to delete application. Please try again.');
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  // Handle delete cancel
+  const handleDeleteCancel = () => {
+    setDeletingApplication(null);
   };
 
   return (
@@ -503,7 +566,7 @@ const MyApplications = () => {
           <thead>
             <tr>
               <th>Job Application Name</th>
-              <th>Submission Date</th>
+              <th>Deadline</th>
               <th>Status</th>
               <th>Category</th>
               <th>Actions</th>
@@ -515,8 +578,8 @@ const MyApplications = () => {
             {loading ? (
               <tr>
                 <td colSpan="5">
-                  <div className="loading-state p-8 text-center text-gray-500">
-                    Loading applications...
+                  <div className="loading-state">
+                    <LoadingSpinner size="lg" isBackend={true} text="Loading applications..." />
                   </div>
                 </td>
               </tr>
@@ -543,9 +606,9 @@ const MyApplications = () => {
                 <tr key={app.id}>
                   {/* Application Name */}
                   <td>{app.name}</td>
-                  
-                  {/* Submission Date */}
-                  <td>{formatDate(app.submissionDate)}</td>
+
+                  {/* Deadline */}
+                  <td>{formatDate(app.deadline)}</td>
                   
                   {/* Status Badge */}
                   <td>
@@ -561,14 +624,6 @@ const MyApplications = () => {
                   <td>
                     <div className="action-buttons">
                       <button 
-                        onClick={() => handleView(app.id)}
-                        className="action-btn view"
-                        title="View Details"
-                        aria-label={`View details for ${app.name}`}
-                      >
-                        <FiEye />
-                      </button>
-                      <button 
                         onClick={() => handleEdit(app.id)}
                         className="action-btn edit"
                         title="Edit Application"
@@ -577,7 +632,7 @@ const MyApplications = () => {
                         <FiEdit2 />
                       </button>
                       <button 
-                        onClick={() => handleDelete(app.id)}
+                        onClick={() => handleDeleteClick(app)}
                         className="action-btn delete"
                         title="Delete Application"
                         aria-label={`Delete ${app.name}`}
@@ -595,23 +650,70 @@ const MyApplications = () => {
 
       {/* Pagination Controls */}
       <div className="pagination">
-        <button 
-          className="pagination-btn"
-          onClick={handlePrevious}
-          disabled={currentPage === 1}
-          aria-label="Previous page"
-        >
-          Previous
-        </button>
-        <button 
-          className="pagination-btn"
-          onClick={handleNext}
-          disabled={currentPage === totalPages}
-          aria-label="Next page"
-        >
-          Next
-        </button>
+        <div className="pagination-numbers">
+          {/* First page */}
+          {currentPage > 3 && (
+            <>
+              <button
+                className={`pagination-number ${currentPage === 1 ? 'active' : ''}`}
+                onClick={() => handlePageChange(1)}
+              >
+                1
+              </button>
+              {currentPage > 4 && <span className="pagination-ellipsis">...</span>}
+            </>
+          )}
+
+          {/* Page numbers */}
+          {Array.from({ length: totalPages }, (_, i) => i + 1)
+            .filter(page => {
+              if (totalPages <= 7) return true;
+              if (page === 1 || page === totalPages) return true;
+              if (Math.abs(currentPage - page) <= 1) return true;
+              return false;
+            })
+            .map(page => (
+              <button
+                key={page}
+                className={`pagination-number ${currentPage === page ? 'active' : ''}`}
+                onClick={() => handlePageChange(page)}
+              >
+                {page}
+              </button>
+            ))}
+
+          {/* Last page */}
+          {currentPage < totalPages - 2 && (
+            <>
+              {currentPage < totalPages - 3 && <span className="pagination-ellipsis">...</span>}
+              <button
+                className={`pagination-number ${currentPage === totalPages ? 'active' : ''}`}
+                onClick={() => handlePageChange(totalPages)}
+              >
+                {totalPages}
+              </button>
+            </>
+          )}
+        </div>
       </div>
+
+      {editingApplication && (
+        <EditApplicationPanel
+          application={editingApplication}
+          onClose={() => setEditingApplication(null)}
+          onUpdate={handleUpdateApplication}
+        />
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {deletingApplication && (
+        <DeleteConfirmationModal
+          application={deletingApplication}
+          onConfirm={handleDeleteConfirm}
+          onCancel={handleDeleteCancel}
+          isLoading={isDeleting}
+        />
+      )}
     </div>
   );
 };

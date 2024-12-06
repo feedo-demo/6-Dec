@@ -1,0 +1,38 @@
+/**
+ * GoogleLogin Component Styles
+ * 
+ * Features:
+ * - Google button styling
+ * - Loading states
+ * - Hover effects
+ */
+
+.google-auth-btn {
+  width: 100%;
+  padding: 0.8rem;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  background: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+}
+
+.google-auth-btn:hover {
+  background-color: #f8f8f8;
+  border-color: #ccc;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.google-auth-btn:active {
+  transform: translateY(0);
+}
+
+.google-auth-btn.loading {
+  opacity: 0.7;
+  cursor: not-allowed;
+} 

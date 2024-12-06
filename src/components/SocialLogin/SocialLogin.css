@@ -1,0 +1,46 @@
+/**
+ * SocialLogin Component Styles
+ * 
+ * Features:
+ * - Social buttons container
+ * - Divider styling
+ * - Spacing for multiple social options
+ */
+
+.social-login {
+  width: 100%;
+}
+
+.social-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+/* Divider */
+.divider {
+  text-align: center;
+  margin: 1.25rem 0;
+  position: relative;
+}
+
+.divider::before,
+.divider::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  width: 45%;
+  height: 1px;
+  background-color: #ddd;
+}
+
+.divider::before { left: 0; }
+.divider::after { right: 0; }
+
+.divider span {
+  background: white;
+  padding: 0 10px;
+  color: #666;
+  font-size: 0.9rem;
+} 

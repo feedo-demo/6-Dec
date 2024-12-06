@@ -7,13 +7,6 @@
  * - Response time tracking
  * - Visual feedback
  * - Responsive design
- * 
- * Features:
- * - Animated entrance effects
- * - Interactive hover states
- * - Real-time response tracking
- * - Gradient button effects
- * - Accessibility features
  */
 
 import React, { useState } from 'react';
@@ -22,8 +15,8 @@ import {
   FiMail,          // For email contact button
   FiMessageSquare   // For live chat button
 } from 'react-icons/fi';
-import faqGirl from '../../../../assets/faq-girl.png';
-import AnimatedNumber from '../../../../components/Animated/AnimatedNumber';
+import { faqGirl } from '../../../../../assets';
+import AnimatedNumber from '../../../../../components/Animated/AnimatedNumber';
 import './Support.css';
 
 const Support = () => {

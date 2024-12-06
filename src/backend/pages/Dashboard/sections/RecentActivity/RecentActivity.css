@@ -81,6 +81,11 @@
   @apply text-gray-600;  /* Description text styling */
 }
 
+/* Notification Text */
+.notification-text {
+  @apply text-gray-600 font-light;  /* Lighter font weight for notifications */
+}
+
 /* Activity Date */
 .activity-date {
   display: none;
@@ -137,4 +142,19 @@
 /* Button Icon Animation */
 .activity-view-btn:hover svg {
   @apply transform translate-x-1;
+}
+
+/* Add these loading state styles */
+.loading-state {
+  @apply flex items-center justify-center min-h-[400px];
+}
+
+.loading-spinner {
+  @apply w-8 h-8 border-2 border-gray-200 border-t-blue-500 rounded-full;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }

@@ -1,0 +1,11 @@
+/**
+ * QuestionTypeRouter Component Styles
+ * 
+ * Features:
+ * - Layout styles for question management
+ * - Consistent spacing and alignment
+ */
+
+.questions-router {
+  @apply w-full;
+} 

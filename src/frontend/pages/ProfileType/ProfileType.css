@@ -33,14 +33,14 @@
 
 /* Hero image styling with negative margin for overlap effect */
 .hero-image img {
-  @apply max-w-full h-auto object-contain mb-[-90px] relative z-0;
+  @apply max-w-full h-auto object-contain relative z-0;
 }
 
 /* Award badges container with shadow and hover effects */
 .award-badges {
   @apply flex gap-4 justify-center bg-white rounded-2xl p-6 
          shadow-lg w-full max-w-[350px] mx-auto relative z-[1]
-         transition-transform duration-300 ease-in-out;
+         transition-transform duration-300 ease-in-out mt-[-120px];
 }
 
 /* Individual award badge styling */
@@ -62,31 +62,37 @@
 
 /* Content container with max-width for readability */
 .profile-type-content {
-  @apply max-w-[800px] mx-auto w-full flex-1 pt-8;
+  @apply max-w-[800px] mx-auto w-full flex-1 pt-8 flex flex-col;
 }
 
 /* Typography Styles
 -------------------------------------------------- */
 /* Welcome title styling */
 .welcome-title {
-  @apply text-4xl font-bold text-gray-900 mb-4 text-center;
+  @apply text-4xl font-bold text-gray-900 mb-3 text-center mt-4;
 }
 
 /* Selection title styling */
 .selection-title {
-  @apply text-3xl font-bold text-gray-800 mb-4 text-center;
+  @apply text-3xl font-bold text-gray-800 mb-3 text-center;
 }
 
-/* Description text styling */
+/* Description text styling - reduce bottom margin */
 .selection-description {
-  @apply text-gray-600 text-center mb-12 max-w-[600px] mx-auto;
+  @apply text-gray-600 text-center mb-4 max-w-[600px] mx-auto;
 }
 
 /* Profile Type Grid Layout
 -------------------------------------------------- */
 /* Grid container for profile type cards */
 .profile-type-grid {
-  @apply grid grid-cols-2 gap-6 mb-12;
+  @apply grid grid-cols-1 gap-6 mb-6 max-w-[800px] mx-auto;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-rows: repeat(2, minmax(200px, 1fr));
+  gap: 24px;
+  margin-top: 1rem;
+  width: 100%;
 }
 
 /* Profile Type Card Styles
@@ -95,13 +101,19 @@
 .profile-type-card {
   background: white;
   border-radius: 12px;
-  padding: 1.5rem;
+  padding: 1.75rem;
   text-align: left;
   border: 2px solid #f0f2f5;
   transition: all 0.3s ease;
   position: relative;
   cursor: pointer;
   overflow: hidden;
+  width: 100%;
+  height: 100%;
+  min-height: 200px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
 }
 
 /* Card hover effects */
@@ -160,72 +172,21 @@
   animation: pulseGlow 2s infinite;
 }
 
-/* Next Button Styles
+/* Auth Button Styles
 -------------------------------------------------- */
-/* Base button styling */
-.next-button {
+/* Auth button styling */
+.auth-button {
+  @apply mx-auto;
+  max-width: 300px;
+  margin-top: 1rem;
+  padding: 0.75rem 2rem;
   width: 100%;
-  height: 48px;
-  padding: 0 1rem;
-  background: linear-gradient(135deg, #0093E9 0%, #80D0C7 100%);
-  color: white;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  font-weight: bold;
-  transition: all 0.3s ease;
-  position: relative;
-  overflow: hidden;
-  margin-top: 2rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
 }
 
-/* Button hover effects */
-.next-button:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 147, 233, 0.3);
-}
-
-/* Button active state */
-.next-button:active {
-  transform: translateY(0);
-}
-
-/* Button gradient hover effect */
-.next-button::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(135deg, #80D0C7 0%, #0093E9 100%);
-  opacity: 0;
-  transition: opacity 0.3s ease;
-}
-
-.next-button:hover::before {
-  opacity: 1;
-}
-
-/* Button text positioning */
-.next-button span {
-  position: relative;
-  z-index: 1;
-}
-
-/* Button disabled state */
-.next-button:disabled {
-  background: linear-gradient(135deg, #93c5dd 0%, #b3dcd7 100%);
-  transform: none;
-  cursor: not-allowed;
-  box-shadow: none;
-}
-
-.next-button:disabled::before {
-  display: none;
+/* Button container styling */
+.button-container {
+  @apply text-center w-full max-w-[300px] mx-auto;
+  margin-bottom: 2rem;
 }
 
 /* Footer Styles
@@ -346,4 +307,38 @@
 
 .next-button:disabled::before {
   display: none;
+}
+
+/* Card content wrapper to ensure proper spacing */
+.profile-type-card .card-content {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  gap: 0.5rem;
+}
+
+/* Adjust responsive design */
+@media (max-width: 768px) {
+  .profile-type-grid {
+    grid-template-columns: 1fr;
+    grid-template-rows: repeat(4, minmax(180px, 1fr));
+  }
+}
+
+/* Error message styles */
+.error-container {
+  @apply flex justify-center items-center p-8;
+}
+
+.error-message {
+  @apply flex flex-col items-center gap-4 text-red-500 bg-red-50 
+         rounded-lg p-6 max-w-md w-full border border-red-200;
+}
+
+.error-icon {
+  @apply w-12 h-12;
+}
+
+.error-message p {
+  @apply text-center text-lg font-medium text-red-700;
 }

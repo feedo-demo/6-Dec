@@ -9,7 +9,7 @@
  */
 
 import React from 'react';
-import { ToastProvider } from '../../components/Toast/ToastContext';
+import { ToastProvider } from '../../../components/Toast/ToastContext';
 import SubscriptionSection from './sections/SubscriptionSection';
 import './Subscription.css';
 

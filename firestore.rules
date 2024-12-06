@@ -1,68 +1,14 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Helper functions
-    function isAuthenticated() {
-      return request.auth != null;
-    }
-    
-    function isOwner(userId) {
-      return isAuthenticated() && request.auth.uid == userId;
+    match /{document=**} {
+      allow read, write: if true;  // WARNING: Allows anyone to read and write any data
     }
 
-    // Users collection rules
-    match /users/{userId} {
-      allow read: if isOwner(userId);
-      allow write: if isOwner(userId);
-
-      // Add rules for saved_opportunities subcollection
-      match /saved_opportunities/{opportunityId} {
-        allow read: if isOwner(userId);
-        allow write: if isOwner(userId);
-        allow delete: if isOwner(userId);
-      }
-    }
-
-    // Pending users collection rules
-    match /pending_users/{userId} {
-      allow read, write: if isOwner(userId);
-      allow delete: if isOwner(userId);
-    }
-
-    // Applications collection rules
-    match /applications/{applicationId} {
-      // Users can read/write their own applications
-      allow read: if isAuthenticated() && 
-        request.auth.uid == resource.data.userId;
-      
-      // Allow creation if user is authenticated and sets themselves as owner
-      allow create: if isAuthenticated() && 
-        request.resource.data.userId == request.auth.uid;
-      
-      // Allow updates and deletes only by the application owner
-      allow update, delete: if isAuthenticated() && 
-        resource.data.userId == request.auth.uid;
-    }
-
-    // Opportunities collection rules
-    match /opportunities/{opportunityId} {
-      // Only allow reading opportunities that are public OR created by the user
-      allow read: if resource.data.visibility == 'public' || 
-                 (isAuthenticated() && request.auth.uid == resource.data.creatorId);
-      
-      // Only authenticated users can create opportunities
-      allow create: if isAuthenticated() && 
-                   request.resource.data.creatorId == request.auth.uid;
-      
-      // Only the creator can update or delete their opportunities
-      allow update, delete: if isAuthenticated() && 
-                          resource.data.creatorId == request.auth.uid;
-    }
-
-    // Shared collections (if needed)
-    match /shared/{document=**} {
-      allow read: if isAuthenticated();
-      allow write: if isAuthenticated();
+    // Stripe customer mappings
+    match /stripe_customers/{userId} {
+      allow read: if request.auth != null && request.auth.uid == userId;
+      allow write: if false;  // Only allow writes from backend
     }
   }
 } 

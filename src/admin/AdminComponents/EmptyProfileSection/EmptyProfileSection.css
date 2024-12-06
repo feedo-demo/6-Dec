@@ -1,0 +1,53 @@
+/**
+ * EmptyProfileSection Component Styles
+ * 
+ * Features:
+ * - Clean empty state styling
+ * - Centered layout
+ * - Responsive design
+ */
+
+.section-content-container {
+  @apply flex flex-col items-center justify-center min-h-[400px] text-center px-4;
+}
+
+.section-placeholder {
+  @apply flex flex-col items-center justify-center;
+}
+
+.section-placeholder p {
+  @apply text-gray-600 text-lg;
+}
+
+.section-placeholder .placeholder-details {
+  @apply text-gray-500 text-base mt-2;
+}
+
+/* Add button styling */
+.section-placeholder .admin-button {
+  @apply min-w-[180px] justify-center;
+}
+
+.section-placeholder .admin-button svg {
+  @apply mr-2;
+}
+
+/* Empty state icon */
+.empty-icon {
+  @apply text-5xl mb-4 text-gray-400;
+}
+
+/* Responsive adjustments */
+@media (max-width: 640px) {
+  .section-content-container {
+    @apply min-h-[300px];
+  }
+  
+  .section-placeholder p {
+    @apply text-base;
+  }
+  
+  .section-placeholder .placeholder-details {
+    @apply text-sm;
+  }
+} 

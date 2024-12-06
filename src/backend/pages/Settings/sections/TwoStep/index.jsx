@@ -7,7 +7,7 @@
  */
 
 import React from 'react';
-import { ToastProvider } from '../../../../components/Toast/ToastContext';
+import { ToastProvider } from '../../../../../components/Toast/ToastContext';
 import TwoStep from './TwoStep';
 
 const TwoStepSection = () => {

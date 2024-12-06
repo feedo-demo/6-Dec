@@ -1,0 +1,76 @@
+/**
+ * AuthToggle Component Styles
+ * 
+ * Features:
+ * - Toggle button styling
+ * - Animated slider
+ * - Active states
+ * - Hover effects
+ */
+
+.auth-toggle {
+  position: relative;
+  display: flex;
+  background-color: #f0f2f5;
+  border-radius: 30px;
+  padding: 4px;
+  margin-bottom: 2rem;
+  width: 280px;
+  margin-left: auto;
+  margin-right: auto;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.06);
+  transition: all 0.3s ease;
+}
+
+.toggle-btn {
+  flex: 1;
+  padding: 10px 24px;
+  border: none;
+  background: none;
+  color: #666;
+  font-weight: 500;
+  font-size: 0.95rem;
+  cursor: pointer;
+  position: relative;
+  z-index: 1;
+  transition: all 0.3s ease;
+  border-radius: 26px;
+}
+
+.toggle-btn:focus {
+  outline: none;
+}
+
+.toggle-btn.active {
+  color: #fff;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.toggle-btn:not(.active):hover {
+  color: #0093E9;
+}
+
+.slider {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  bottom: 4px;
+  width: calc(50% - 4px);
+  background: linear-gradient(135deg, #0093E9 0%, #80D0C7 100%);
+  border-radius: 26px;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 2px 4px rgba(0, 147, 233, 0.2),
+              0 4px 8px rgba(0, 147, 233, 0.1);
+}
+
+.slider.right {
+  transform: translateX(calc(100% + 4px));
+}
+
+.auth-toggle:hover {
+  background-color: #e8eaed;
+}
+
+.auth-toggle:active {
+  transform: scale(0.98);
+} 

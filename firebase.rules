@@ -1,0 +1,15 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Admin collection rules
+    match /admin/questions/{profileType}/{tabId}/{document=**} {
+      allow read, write: if request.auth != null && 
+        exists(/databases/$(database)/documents/admin/users/$(request.auth.uid));
+    }
+    
+    // Admin users collection
+    match /admin/users/{userId} {
+      allow read: if request.auth != null && request.auth.uid == userId;
+    }
+  }
+} 

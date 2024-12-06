@@ -18,7 +18,7 @@
 
 import React, { useState } from 'react';
 import { FiChevronDown } from 'react-icons/fi';
-import AnimatedNumber from '../../../../components/Animated/AnimatedNumber';
+import AnimatedNumber from '../../../../../components/Animated/AnimatedNumber';
 import './FAQ.css';
 
 const FAQ = () => {

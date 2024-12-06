@@ -102,33 +102,43 @@
 
 /* Progress bars styling */
 .progress-container {
-  @apply w-full flex items-center relative;
+  @apply w-full h-full flex items-center relative;
 }
 
 .progress-bar {
   @apply relative h-2 bg-gray-200 rounded-full overflow-hidden w-[85%];
 }
 
-.progress-fill {
-  @apply absolute left-0 top-0 h-full transition-all duration-500 ease-out;
-  transition: width 0.5s ease-out;
+.progress-bar .progress-fill {
+  @apply absolute left-0 top-0 h-full;
+  width: 0;
+  animation: progressFill 1.5s ease-out forwards;
 }
 
-/* Progress bar variants */
+/* Progress Bar Variants */
 .progress-bar.match .progress-fill {
-  @apply bg-gradient-to-r from-green-500 to-green-400;
+  background: linear-gradient(90deg, #4CAF50, #81C784);
 }
 
 .progress-bar.application .progress-fill {
-  @apply bg-gradient-to-r from-blue-500 to-blue-400;
+  background: linear-gradient(90deg, #2196F3, #64B5F6);
 }
 
-/* Progress text styling */
+/* Progress Text */
 .progress-text {
   @apply absolute text-sm text-gray-600 whitespace-nowrap;
   left: calc(85% + 8px);
   top: 50%;
   transform: translateY(-50%);
+}
+
+@keyframes progressFill {
+  from {
+    width: 0;
+  }
+  to {
+    width: var(--target-width);
+  }
 }
 
 /* Content Sections - Spacing and layout for main content areas */

@@ -25,6 +25,10 @@ import {
 import './RecentActivity.css';
 import { useAuth } from '../../../../../auth/AuthContext';
 import { applicationOperations, opportunityOperations } from '../../../../../applications/applicationManager';
+import SkeletonLoading from '../../../../../components/SkeletonLoading/SkeletonLoading';
+import { db } from '../../../../../firebase/config';
+import { doc, getDoc } from 'firebase/firestore';
+import useProfileProgress from '../../../../../hooks/useProfileProgress';
 
 const RecentActivity = () => {
   const navigate = useNavigate();
@@ -32,6 +36,7 @@ const RecentActivity = () => {
   const [activities, setActivities] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const { sections, getMissingSteps } = useProfileProgress();
 
   // Helper function to get application status message
   const getApplicationStatusMessage = (application) => {
@@ -58,54 +63,58 @@ const RecentActivity = () => {
       try {
         setLoading(true);
 
+        // Get missing steps
+        const missingStepsData = getMissingSteps();
+        const missingStepActivities = missingStepsData.sections.length > 0 ? [{
+          id: missingStepsData.sections.length > 1 ? 'missing-multiple' : `missing-${missingStepsData.sections[0].id}`,
+          type: missingStepsData.sections.length > 1 ? 'Missing Steps' : 'Missing Step',
+          icon: missingStepsData.sections.length > 1 ? FiAlertCircle : getSectionIcon(missingStepsData.sections[0].id),
+          description: missingStepsData.message,
+          date: new Date(),
+          color: 'text-orange-500',
+          bgColor: 'bg-orange-50',
+          link: `/data-management?tab=${missingStepsData.sections[0].id}`,
+          targetTab: missingStepsData.sections[0].id
+        }] : [];
+
         // Fetch both applications and opportunities
         const [applications, opportunities] = await Promise.all([
           applicationOperations.getUserApplications(user.profile.authUid),
           opportunityOperations.getOpportunities({ userId: user.profile.authUid })
         ]);
 
-        // Format applications with status
+        // Format application notifications
         const applicationActivities = applications.slice(0, 2).map(app => ({
           id: `app-${app.id}`,
-          type: 'Application',
           icon: getStatusIcon(app.status),
           description: getApplicationStatusMessage(app),
           date: new Date(app.createdAt),
           color: getStatusColor(app.status),
-          bgColor: getStatusBgColor(app.status)
+          bgColor: getStatusBgColor(app.status),
+          type: 'Application',
+          link: '/my-applications'
         }));
 
-        // Format most recent opportunity
-        const opportunityActivity = opportunities.length > 0 ? [{
-          id: `opp-${opportunities[0].id}`,
-          type: 'New Opportunity',
+        // Format opportunity notifications
+        const opportunityActivities = opportunities.slice(0, 2).map(opp => ({
+          id: `opp-${opp.id}`,
           icon: FiSun,
-          description: opportunities[0].title,
-          date: new Date(opportunities[0].createdAt),
+          description: `New opportunity: ${opp.title}`,
+          date: new Date(opp.createdAt),
           color: 'text-yellow-500',
-          bgColor: 'bg-yellow-50'
-        }] : [];
-
-        // Get missing data step if any
-        const missingStep = getMissingDataStep(user);
-        const missingStepActivity = missingStep ? [missingStep] : [];
+          bgColor: 'bg-yellow-50',
+          type: 'Opportunity',
+          link: '/new-opportunities'
+        }));
 
         // Combine all activities
-        const combinedActivities = [
+        const allActivities = [
+          ...missingStepActivities,
           ...applicationActivities,
-          ...opportunityActivity,
-          ...missingStepActivity
-        ];
+          ...opportunityActivities
+        ].sort((a, b) => b.date - a.date);
 
-        // Sort by date and format dates
-        const sortedActivities = combinedActivities
-          .sort((a, b) => b.date - a.date)
-          .map(activity => ({
-            ...activity,
-            date: formatDate(activity.date)
-          }));
-
-        setActivities(sortedActivities);
+        setActivities(allActivities);
         setError(null);
       } catch (err) {
         console.error('Error fetching activities:', err);
@@ -116,7 +125,7 @@ const RecentActivity = () => {
     };
 
     fetchActivities();
-  }, [user]);
+  }, [user, sections]);
 
   // Helper function to get status icon
   const getStatusIcon = (status) => {
@@ -186,45 +195,107 @@ const RecentActivity = () => {
     }
   };
 
-  // Helper function to get missing data step
-  const getMissingDataStep = (user) => {
-    if (!user?.profile?.professionalSummary) {
-      return {
-        id: 'missing-profile',
-        type: 'Missing Step',
-        icon: FiUser,
-        description: 'Complete your professional summary',
-        date: new Date(),
-        color: 'text-orange-500',
-        bgColor: 'bg-orange-50',
-        targetTab: 'personal'
-      };
+  // Add helper function to check section completion (same as DataSubmission)
+  const checkSectionCompletion = (sectionId, user, questions) => {
+    // If no user data or no profile sections, section is incomplete
+    if (!user?.profileSections || !user.profileSections[sectionId]) {
+      console.log(`Section ${sectionId} incomplete: No user data or section data`);
+      return false;
     }
-    if (!user?.education?.degreeLevel) {
-      return {
-        id: 'missing-education',
-        type: 'Missing Step',
-        icon: FiBook,
-        description: 'Add your education details',
-        date: new Date(),
-        color: 'text-purple-500',
-        bgColor: 'bg-purple-50',
-        targetTab: 'education'
-      };
+
+    const sectionData = user.profileSections[sectionId];
+    
+    // If no questions array in section data, section is incomplete
+    if (!sectionData.questions || !Array.isArray(sectionData.questions)) {
+      console.log(`Section ${sectionId} incomplete: No questions array in section data`);
+      return false;
     }
-    if (!user?.verification?.isVerified) {
-      return {
-        id: 'missing-verification',
-        type: 'Missing Step',
-        icon: FiShield,
-        description: 'Complete your verification',
-        date: new Date(),
-        color: 'text-red-500',
-        bgColor: 'bg-red-50',
-        targetTab: 'verification'
-      };
+
+    // If no questions in config, section is incomplete
+    if (!questions || !Array.isArray(questions) || questions.length === 0) {
+      console.log(`Section ${sectionId} incomplete: No questions in config`);
+      return false;
     }
-    return null;
+
+    // Get required questions from config
+    const requiredQuestions = questions.filter(q => q.required);
+    
+    // For sections with no required questions, treat all questions as required
+    // This ensures at least one question must be answered
+    const questionsToCheck = requiredQuestions.length > 0 ? requiredQuestions : questions;
+    
+    // Check each question
+    for (const question of questionsToCheck) {
+      const questionData = sectionData.questions.find(q => q.id === question.id);
+      
+      // If question data doesn't exist or has no answer, section is incomplete
+      if (!questionData || !questionData.answer) {
+        console.log(`Section ${sectionId} incomplete: Missing answer for question ${question.id}`);
+        return false;
+      }
+
+      // For repeater type questions
+      if (question.type === 'repeater' && question.repeaterFields) {
+        // If answer is not an array or is empty, section is incomplete
+        if (!Array.isArray(questionData.answer) || questionData.answer.length === 0) {
+          console.log(`Section ${sectionId} incomplete: Empty or invalid repeater answer for question ${question.id}`);
+          return false;
+        }
+
+        // Check each repeater entry for fields
+        const fieldsToCheck = question.repeaterFields.filter(field => field.required || requiredQuestions.length === 0);
+        for (const entry of questionData.answer) {
+          for (const field of fieldsToCheck) {
+            if (!entry || !entry[field.id] || entry[field.id] === '') {
+              console.log(`Section ${sectionId} incomplete: Missing field ${field.id} in question ${question.id}`);
+              return false;
+            }
+          }
+        }
+      }
+      // For non-repeater questions
+      else {
+        // Check for empty string, null, undefined, or empty array
+        const isEmpty = 
+          questionData.answer === '' || 
+          questionData.answer === null || 
+          questionData.answer === undefined ||
+          (Array.isArray(questionData.answer) && (
+            questionData.answer.length === 0 || 
+            questionData.answer.every(a => a === null || a === undefined || a === '')
+          ));
+
+        if (isEmpty) {
+          console.log(`Section ${sectionId} incomplete: Empty answer for question ${question.id}`);
+          return false;
+        }
+      }
+    }
+
+    // If we get here, all checked questions have valid answers
+    console.log(`Section ${sectionId} complete: All questions answered`);
+    return true;
+  };
+
+  // Helper function to format section name
+  const formatSectionName = (sectionId) => {
+    return sectionId
+      .split('-')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ');
+  };
+
+  // Helper function to get appropriate icon for each section
+  const getSectionIcon = (sectionId) => {
+    const iconMap = {
+      'personal': FiUser,
+      'education': FiBook,
+      'work-experience': FiBriefcase,
+      'verification': FiShield,
+      // Add more section mappings as needed
+    };
+
+    return iconMap[sectionId] || FiAlertCircle;
   };
 
   // Format date helper function
@@ -257,7 +328,10 @@ const RecentActivity = () => {
   // Navigation handlers
   const handleViewApplications = () => navigate('/my-applications');
   const handleViewOpportunities = () => navigate('/new-opportunities');
-  const handleViewProfile = (targetTab) => navigate(`/data-management?tab=${targetTab}`);
+  const handleViewProfile = (activity) => {
+    const tab = activity.targetTab || activity.link?.split('tab=')[1];
+    navigate(`/data-management?tab=${tab}`);
+  };
 
   // Get button config based on activity type
   const getViewButton = (activity) => {
@@ -270,16 +344,17 @@ const RecentActivity = () => {
           onClick: handleViewApplications,
           Icon
         };
-      case 'New Opportunity':
+      case 'Opportunity':
         return {
           label: 'View',
           onClick: handleViewOpportunities,
           Icon
         };
       case 'Missing Step':
+      case 'Missing Steps':
         return {
           label: 'Complete',
-          onClick: () => handleViewProfile(activity.targetTab),
+          onClick: () => handleViewProfile(activity),
           Icon
         };
       default:
@@ -290,19 +365,8 @@ const RecentActivity = () => {
   if (loading) {
     return (
       <div className="recent-activity">
-        <div className="activity-header">
-          <h2 className="activity-title">Recent Activity</h2>
-        </div>
-        <div className="activity-list">
-          {[1, 2, 3].map((index) => (
-            <div key={index} className="activity-item animate-pulse">
-              <div className="w-8 h-8 bg-gray-200 rounded-full"></div>
-              <div className="flex-1">
-                <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-                <div className="h-3 bg-gray-100 rounded w-1/2 mt-2"></div>
-              </div>
-            </div>
-          ))}
+        <div className="loading-state">
+          <div className="loading-spinner"></div>
         </div>
       </div>
     );
@@ -321,19 +385,6 @@ const RecentActivity = () => {
     );
   }
 
-  if (activities.length === 0) {
-    return (
-      <div className="recent-activity">
-        <div className="activity-header">
-          <h2 className="activity-title">Recent Activity</h2>
-        </div>
-        <div className="text-gray-500 text-center py-4">
-          No recent activities
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="recent-activity">
       <div className="activity-header">
@@ -341,33 +392,39 @@ const RecentActivity = () => {
       </div>
       
       <div className="activity-list">
-        {activities.map((activity, index) => (
-          <div 
-            key={activity.id}
-            className="activity-item"
-            style={{ animationDelay: `${index * 100}ms` }}
-          >
-            <div className={`activity-icon-wrapper ${activity.bgColor}`}>
-              <activity.icon className={`activity-icon ${activity.color}`} />
-            </div>
-            
-            <div className="activity-content">
-              <div className="activity-main">
-                <span className="activity-type">{activity.type}:</span>
-                <span className="activity-description">{activity.description}</span>
+        {activities.length > 0 ? (
+          activities.map((activity, index) => (
+            <div 
+              key={activity.id}
+              className="activity-item"
+              style={{ animationDelay: `${index * 100}ms` }}
+            >
+              <div className={`activity-icon-wrapper ${activity.bgColor}`}>
+                <activity.icon className={`activity-icon ${activity.color}`} />
               </div>
-              {getViewButton(activity) && (
-                <button 
-                  onClick={getViewButton(activity).onClick}
-                  className="activity-view-btn"
-                >
-                  {getViewButton(activity).label}
-                  <FiArrowRight className="inline ml-1" />
-                </button>
-              )}
+              
+              <div className="activity-content">
+                <div className="activity-main">
+                  <span className="activity-type">{activity.type}:</span>
+                  <span className="activity-description">{activity.description}</span>
+                </div>
+                {getViewButton(activity) && (
+                  <button 
+                    onClick={getViewButton(activity).onClick}
+                    className="activity-view-btn"
+                  >
+                    {getViewButton(activity).label}
+                    <FiArrowRight className="inline ml-1" />
+                  </button>
+                )}
+              </div>
             </div>
+          ))
+        ) : (
+          <div className="text-gray-500 text-center py-4">
+            No recent activities
           </div>
-        ))}
+        )}
       </div>
     </div>
   );

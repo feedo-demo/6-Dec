@@ -313,16 +313,25 @@ tr:hover .deadline-icon {
 
 /* Pagination */
 .pagination {
-  @apply mt-6 flex items-center justify-end gap-4;
+  @apply flex items-center justify-center mt-8;
 }
 
-.pagination-btn {
-  @apply px-6 py-2 text-sm text-gray-600 bg-white border border-gray-200 rounded-lg
-         hover:bg-gray-50 transition-all duration-300;
+.pagination-numbers {
+  @apply flex items-center gap-2;
 }
 
-.pagination-btn:disabled {
-  @apply opacity-50 cursor-not-allowed hover:bg-white;
+.pagination-number {
+  @apply w-8 h-8 flex items-center justify-center text-sm font-medium text-gray-700 
+         bg-white border border-gray-300 rounded-md hover:bg-gray-50 
+         transition-colors duration-200;
+}
+
+.pagination-number.active {
+  @apply bg-blue-50 text-blue-600 border-blue-500;
+}
+
+.pagination-ellipsis {
+  @apply text-gray-500 mx-1;
 }
 
 /* Responsive Design
@@ -428,12 +437,17 @@ tr:hover .deadline-icon {
   animation: fadeInUp 0.6s ease-out forwards;
 }
 
+/* Status Box Layout */
 .status-box {
-  @apply flex items-center p-4 rounded-lg text-white transition-all duration-300
+  @apply p-4 rounded-lg text-white transition-all duration-300
          hover:transform hover:-translate-y-1 cursor-pointer
          relative overflow-hidden;
   animation: slideInFromBottom 0.5s ease-out forwards;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 1.25rem;
+  align-items: center;
 }
 
 .status-box:hover {
@@ -485,9 +499,13 @@ tr:hover .deadline-icon {
 
 /* Enhanced Status Icon */
 .status-icon {
-  @apply flex items-center justify-center w-12 h-12 mr-3 bg-white/20 rounded-full;
+  @apply flex items-center justify-center w-11 h-11 bg-white/20 rounded-full;
   animation: rotateIn 0.6s ease-out forwards;
   backdrop-filter: blur(4px);
+}
+
+.status-icon svg {
+  @apply w-6 h-6;
 }
 
 @keyframes rotateIn {
@@ -525,17 +543,17 @@ tr:hover .deadline-icon {
 
 /* Enhanced Status Content */
 .status-content {
-  @apply flex flex-col;
+  @apply flex flex-col justify-center min-w-0;
   animation: fadeIn 0.6s ease-out forwards;
 }
 
 .status-label {
-  @apply text-sm font-medium text-white/90;
+  @apply text-sm font-medium text-white/90 mb-0.5;
   animation: slideInFromRight 0.5s ease-out forwards;
 }
 
 .status-value {
-  @apply text-3xl font-bold;
+  @apply text-2xl font-bold leading-none;
   animation: countUp 0.8s ease-out forwards;
   text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
 }
@@ -671,5 +689,10 @@ tr:hover .deadline-icon {
 /* Simplified empty state with just the background pattern */
 .empty-state {
   background-image: url("data:image/svg+xml,%3Csvg width='6' height='6' viewBox='0 0 6 6' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23f0f0f0' fill-opacity='0.4' fill-rule='evenodd'%3E%3Cpath d='M5 0h1L0 6V5zM6 5v1H5z'/%3E%3C/g%3E%3C/svg%3E");
+}
+
+/* Loading State */
+.loading-state {
+  @apply p-8 flex items-center justify-center;
 }
 

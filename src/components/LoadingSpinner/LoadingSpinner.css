@@ -1,0 +1,114 @@
+/**
+ * LoadingSpinner Component Styles
+ * 
+ * Features:
+ * - Smooth rotation animation
+ * - Flexible container layout
+ * - Responsive text styling
+ * - Special delete icon spinner styling
+ * - Special set default spinner styling
+ */
+
+/* Base loading spinner container */
+.loading-spinner-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+/* Backend-specific container */
+.loading-spinner-container-backend {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  padding: 1rem;
+}
+
+/* Base loading spinner animation */
+.loading-spinner {
+  animation: spin 1s linear infinite;
+}
+
+/* Base loading text */
+.loading-text {
+  font-size: 0.875rem;
+  color: #4B5563;
+}
+
+/* Backend-specific loading text */
+.loading-text-backend {
+  font-size: 0.75rem;
+  color: #6B7280;
+}
+
+/* Delete icon spinner */
+.delete-icon-spinner-container {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.delete-icon-spinner {
+  width: 1rem;
+  height: 1rem;
+  animation: spin 1s linear infinite;
+}
+
+/* Set default spinner */
+.set-default-spinner-container {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.set-default-spinner-icon {
+  width: 1rem;
+  height: 1rem;
+  animation: spin 1s linear infinite;
+}
+
+.set-default-spinner-text {
+  font-size: 0.875rem;
+  color: #4B5563;
+}
+
+/* Two-factor spinner */
+.two-factor-spinner-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.two-factor-spinner-icon {
+  width: 1.5rem;
+  height: 1.5rem;
+  animation: spin 1s linear infinite;
+}
+
+.two-factor-spinner-text {
+  font-size: 0.875rem;
+  color: #4B5563;
+}
+
+/* Spinner animation */
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Responsive adjustments */
+@media (max-width: 640px) {
+  .loading-text,
+  .set-default-spinner-text {
+    @apply text-xs;
+  }
+} 

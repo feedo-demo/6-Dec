@@ -1,0 +1,23 @@
+/**
+ * AdminLayout Component Styles
+ * 
+ * Features:
+ * - Fixed sidebar
+ * - Scrollable content area
+ * - Responsive layout
+ */
+
+.admin-layout {
+  @apply flex min-h-screen bg-gray-50;
+}
+
+.admin-content {
+  @apply flex-1 ml-64 p-8;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .admin-content {
+    @apply ml-0 p-4;
+  }
+} 

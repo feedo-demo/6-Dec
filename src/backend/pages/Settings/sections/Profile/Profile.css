@@ -85,24 +85,70 @@
 }
 
 .profile-status {
-  @apply text-xs px-3 py-1 rounded-full font-medium inline-flex items-center;
+  @apply text-xs px-3 py-1.5 rounded-full font-medium inline-flex items-center;
   white-space: nowrap;
 }
 
+/* Predefined color combinations for known types */
+.profile-status.jobseeker {
+  @apply bg-purple-50 text-purple-600;
+}
+
 .profile-status.entrepreneur {
-  @apply bg-blue-100 text-blue-600;
+  @apply bg-blue-50 text-blue-600;
 }
 
 .profile-status.student {
-  @apply bg-green-100 text-green-600;
-}
-
-.profile-status.jobseeker {
-  @apply bg-purple-100 text-purple-600;
+  @apply bg-green-50 text-green-600;
 }
 
 .profile-status.company {
-  @apply bg-orange-100 text-orange-600;
+  @apply bg-orange-50 text-orange-600;
+}
+
+.profile-status.pending {
+  @apply bg-gray-50 text-gray-600;
+}
+
+/* Random color combinations for dynamic profile types */
+.profile-status.type-1 {
+  @apply bg-pink-50 text-pink-600;
+}
+
+.profile-status.type-2 {
+  @apply bg-indigo-50 text-indigo-600;
+}
+
+.profile-status.type-3 {
+  @apply bg-teal-50 text-teal-600;
+}
+
+.profile-status.type-4 {
+  @apply bg-cyan-50 text-cyan-600;
+}
+
+.profile-status.type-5 {
+  @apply bg-rose-50 text-rose-600;
+}
+
+.profile-status.type-6 {
+  @apply bg-amber-50 text-amber-600;
+}
+
+.profile-status.type-7 {
+  @apply bg-lime-50 text-lime-600;
+}
+
+.profile-status.type-8 {
+  @apply bg-emerald-50 text-emerald-600;
+}
+
+.profile-status.type-9 {
+  @apply bg-sky-50 text-sky-600;
+}
+
+.profile-status.type-10 {
+  @apply bg-fuchsia-50 text-fuchsia-600;
 }
 
 .profile-category {

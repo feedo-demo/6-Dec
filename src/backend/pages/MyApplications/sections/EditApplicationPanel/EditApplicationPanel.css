@@ -1,0 +1,116 @@
+/* Overlay backdrop
+ * - Fixed positioning to cover entire viewport
+ * - Semi-transparent black background
+ * - High z-index to appear above other content
+ */
+.slide-panel-overlay {
+  @apply fixed inset-0 bg-black bg-opacity-50 z-50
+         flex justify-end transition-all duration-300;
+}
+
+/* Panel wrapper
+ * - Full height with maximum width constraint
+ * - Light background for contrast
+ * - Smooth transform transition
+ * - Custom slide-in animation
+ */
+.slide-panel-wrapper {
+  @apply bg-gray-50 w-full max-w-3xl h-full relative
+         transform transition-transform duration-300 ease-out;
+  animation: slideIn 0.3s ease-out forwards;
+}
+
+/* Content container
+ * - Full height utilization
+ * - Vertical scrolling for overflow content
+ */
+.slide-panel-content {
+  @apply h-full overflow-y-auto;
+}
+
+/* Close button styling
+ * - Fixed positioning in top-right corner
+ * - Circular background with hover effect
+ * - Smooth color transitions
+ * - Elevated z-index to stay above content
+ */
+.slide-panel-close-btn {
+  @apply absolute top-4 right-4 p-2 rounded-full bg-white
+         text-gray-600 hover:text-gray-900 transition-all duration-300
+         hover:bg-gray-100 z-10;
+}
+
+/* Slide-in animation keyframes
+ * - Starts from fully off-screen (100% translated)
+ * - Smoothly slides to natural position (0 translation)
+ */
+@keyframes slideIn {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+/* Form Styles */
+.edit-application-form {
+  @apply p-6 pt-16 space-y-6;
+}
+
+.form-group {
+  @apply space-y-2;
+}
+
+.form-group label {
+  @apply block text-sm font-medium text-gray-700;
+}
+
+.form-group input[type="text"],
+.form-group input[type="date"],
+.form-group select,
+.form-group textarea {
+  @apply w-full px-4 py-2 border border-gray-300 rounded-lg 
+         focus:ring-2 focus:ring-blue-500 focus:border-blue-500
+         bg-white;
+}
+
+.form-group textarea {
+  @apply resize-none;
+}
+
+/* Error Message */
+.error-message {
+  @apply p-4 mb-4 text-sm text-red-700 bg-red-100 rounded-lg;
+}
+
+/* Form Actions */
+.form-actions {
+  @apply flex items-center justify-end gap-4 pt-6 mt-6 border-t border-gray-200;
+}
+
+/* Override Button hover styles for outline variant */
+.form-actions .button-outline:hover {
+  @apply text-gray-700;
+}
+
+/* Button Hover States */
+.form-actions button:hover {
+  @apply transform -translate-y-0.5 transition-transform;
+}
+
+/* Loading State */
+.form-actions button:disabled {
+  @apply opacity-50 cursor-not-allowed;
+}
+
+/* Responsive Design */
+@media (max-width: 640px) {
+  .slide-panel-wrapper {
+    @apply max-w-full;
+  }
+  
+  .edit-application-form {
+    @apply p-4;
+  }
+} 

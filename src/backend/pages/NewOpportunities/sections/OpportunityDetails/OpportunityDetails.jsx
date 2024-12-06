@@ -10,7 +10,7 @@
 import React from 'react';
 import { FiCalendar, FiHeart, FiX } from 'react-icons/fi';
 import { FaHeart } from 'react-icons/fa';
-import AnimatedPercentage from '../../../../components/Animated/AnimatedPercentage';
+import AnimatedPercentage from '../../../../../components/Animated/AnimatedPercentage';
 import './OpportunityDetails.css';
 
 const OpportunityDetails = ({ opportunity, onClose }) => {
@@ -55,19 +55,10 @@ const OpportunityDetails = ({ opportunity, onClose }) => {
         <div className="progress-item">
           <label>Application Progress</label>
           <div className="progress-container">
-            <div className="progress-bar">
+            <div className="progress-bar application">
               <div 
                 className="progress-fill"
-                style={{ 
-                  width: `${getValidProgress(opportunity.applicationProgress)}%`,
-                  backgroundColor: '#2196F3',
-                  position: 'absolute',
-                  height: '100%',
-                  left: 0,
-                  top: 0,
-                  transition: 'width 0.5s ease-out',
-                  borderRadius: '9999px'
-                }}
+                style={{ '--target-width': `${getValidProgress(opportunity.applicationProgress)}%` }}
               />
             </div>
             <span className="progress-text">
@@ -78,19 +69,10 @@ const OpportunityDetails = ({ opportunity, onClose }) => {
         <div className="progress-item">
           <label>Match Percentage</label>
           <div className="progress-container">
-            <div className="progress-bar">
+            <div className="progress-bar match">
               <div 
                 className="progress-fill"
-                style={{ 
-                  width: `${getValidProgress(opportunity.matchPercentage)}%`,
-                  backgroundColor: '#4CAF50',
-                  position: 'absolute',
-                  height: '100%',
-                  left: 0,
-                  top: 0,
-                  transition: 'width 0.5s ease-out',
-                  borderRadius: '9999px'
-                }}
+                style={{ '--target-width': `${getValidProgress(opportunity.matchPercentage)}%` }}
               />
             </div>
             <span className="progress-text">

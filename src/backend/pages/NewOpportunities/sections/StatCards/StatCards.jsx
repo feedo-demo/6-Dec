@@ -17,7 +17,7 @@ import {
     FiTrendingUp,  // Success rate
     FiClock        // Closing soon
 } from 'react-icons/fi';
-import AnimatedNumber from '../../../../components/Animated/AnimatedNumber';
+import AnimatedNumber from '../../../../../components/Animated/AnimatedNumber';
 import { opportunityOperations } from '../../../../../applications/applicationManager';
 import './StatCards.css';
 import { useAuth } from '../../../../../auth/AuthContext';

@@ -24,7 +24,7 @@ import { FiChevronDown, FiPlus } from 'react-icons/fi';
 import StatCards from './sections/StatCards/StatCards';
 import './NewOpportunities.css';
 // Animated number component for dynamic values
-import AnimatedNumber from '../../components/Animated/AnimatedNumber';
+import AnimatedNumber from '../../../components/Animated/AnimatedNumber';
 // Navigation hook for routing
 import { useNavigate } from 'react-router-dom';
 // Panel components for detailed views
@@ -34,7 +34,7 @@ import OpportunityDetails from './sections/OpportunityDetails/OpportunityDetails
 import { useAuth } from '../../../auth/AuthContext';
 import { opportunityOperations, createOpportunityDataStructure } from '../../../applications/applicationManager';
 // First, add Button to imports at the top
-import Button from '../../components/Button/Button';
+import Button from '../../../components/Button/Button';
 
 // Add this helper function near the top of the file
 const formatDate = (dateString) => {

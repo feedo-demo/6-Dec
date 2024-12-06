@@ -4,13 +4,15 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { auth } from '../firebase/config';
-import { onAuthStateChanged, updateProfile as updateFirebaseProfile } from 'firebase/auth';
+import { onAuthStateChanged, updateProfile as updateFirebaseProfile, OAuthProvider } from 'firebase/auth';
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword, signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
 import { transformUserData, userOperations, createUserDataStructure } from './userManager';
-import { doc, setDoc, getDoc } from 'firebase/firestore';
+import { doc, setDoc, getDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../firebase/config';
 import { verifyTwoFactorCode } from './twoFactorAuth';
 import { authenticator } from 'otplib';
+import { useToast } from '../components/Toast/ToastContext';
+import { AUTH_NOTIFICATIONS, handleAuthError } from '../components/Toast/toastnotifications';
 
 const AuthContext = createContext();
 
@@ -27,6 +29,7 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [requiresTwoFactor, setRequiresTwoFactor] = useState(false);
   const [tempAuthCredentials, setTempAuthCredentials] = useState(null);
+  const { showToast } = useToast();
 
   const login = async (email, password) => {
     try {
@@ -38,7 +41,6 @@ export const AuthProvider = ({ children }) => {
       
       // Check if user has 2FA enabled
       if (userData?.twoFactorAuth?.enabled) {
-        // Store credentials temporarily and require 2FA
         setTempAuthCredentials(userCredential);
         setRequiresTwoFactor(true);
         return { requiresTwoFactor: true };
@@ -47,9 +49,15 @@ export const AuthProvider = ({ children }) => {
       // If no 2FA, proceed with normal login
       const transformedData = transformUserData(userCredential.user, userData, userData?.isPending);
       setUser(transformedData);
-      return userCredential;
+      
+      showToast(AUTH_NOTIFICATIONS.LOGIN.SUCCESS, 'success');
+      return { 
+        user: transformedData,
+        success: true 
+      };
     } catch (error) {
       console.error('Login error:', error);
+      showToast(handleAuthError(error), 'error');
       throw error;
     }
   };
@@ -85,7 +93,11 @@ export const AuthProvider = ({ children }) => {
       setRequiresTwoFactor(false);
       setTempAuthCredentials(null);
 
-      return { success: true };
+      showToast(AUTH_NOTIFICATIONS.LOGIN.SUCCESS, 'success');
+      return { 
+        success: true,
+        user: transformedData 
+      };
     } catch (error) {
       console.error('2FA verification error:', error);
       throw error;
@@ -102,8 +114,11 @@ export const AuthProvider = ({ children }) => {
         displayName: userData.displayName
       });
 
-      // Create user data structure
-      const userDataStructure = createUserDataStructure(userCredential.user, userData);
+      // Create user data structure with explicit userType
+      const userDataStructure = createUserDataStructure(userCredential.user, {
+        ...userData,
+        userType: 'pending' // Explicitly set userType
+      });
       
       // Create pending user document
       await userOperations.createPendingUser(userCredential.user.uid, userDataStructure);
@@ -125,45 +140,125 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const googleSignIn = async (isSignUp = false) => {
-    const provider = new GoogleAuthProvider();
-    
+  const googleSignIn = async () => {
     try {
+      const provider = new GoogleAuthProvider();
+      provider.addScope('profile');
+      provider.addScope('email');
       const result = await signInWithPopup(auth, provider);
-      const userData = await userOperations.getUserData(result.user.uid);
-      console.log('Google Sign In - Raw Data:', { result, userData });
+      const user = result.user;
+      
+      console.log('Google sign in result:', {
+        user,
+        photoURL: user.photoURL,
+        providerData: user.providerData
+      });
+      
+      // Check if user exists in Firestore
+      const userDoc = await getDoc(doc(db, 'users', user.uid));
+      
+      if (!userDoc.exists()) {
+        // Split display name into first and last name
+        const nameParts = user.displayName ? user.displayName.split(' ') : ['', ''];
+        const firstName = nameParts[0] || '';
+        const lastName = nameParts.slice(1).join(' ') || '';
 
-      if (!userData.data && !isSignUp) {
-        await auth.signOut();
-        throw new Error('No account found. Please sign up first.');
-      }
+        // Create initial data object with explicit provider and photo URL
+        const initialData = {
+          profile: {
+            firstName,
+            lastName,
+            displayName: user.displayName || '',
+            photoURL: user.photoURL,
+            provider: 'google.com',
+            email: user.email
+          },
+          isPending: true
+        };
 
-      if (userData.data && isSignUp) {
-        await auth.signOut();
-        throw new Error('Account already exists. Please login instead.');
-      }
-
-      if (!userData.data && isSignUp) {
-        // Create new pending user for signup
-        const userDataStructure = createUserDataStructure(result.user, {
-          firstName: result.user.displayName?.split(' ')[0] || '',
-          lastName: result.user.displayName?.split(' ').slice(1).join(' ') || '',
-          provider: 'google'
+        // Create user data structure
+        const userData = createUserDataStructure(user, initialData);
+        
+        // Create pending user document instead of direct creation
+        await userOperations.createPendingUser(user.uid, userData);
+        
+        // Transform and set user state
+        const transformedData = transformUserData(user, userData, true);
+        setUser({
+          ...transformedData,
+          isPending: true
         });
         
-        await userOperations.createUserDocument(result.user.uid, userDataStructure, true);
-        const transformedData = transformUserData(result.user, userDataStructure, true);
-        console.log('Google Sign Up - New User Data:', transformedData);
-        setUser(transformedData);
-        return { isNewUser: true };
+        return {
+          user: transformedData,
+          isNewUser: true
+        };
       }
-
-      const transformedData = transformUserData(result.user, userData.data, userData.isPending);
-      console.log('Google Sign In - Transformed Data:', transformedData);
+      
+      // Existing user - update photo URL if needed
+      const userData = userDoc.data();
+      if (user.photoURL && user.photoURL !== userData.profile?.photoURL) {
+        await updateDoc(doc(db, 'users', user.uid), {
+          'profile.photoURL': user.photoURL
+        });
+        userData.profile.photoURL = user.photoURL;
+      }
+      
+      const transformedData = transformUserData(user, userData, userData?.isPending);
       setUser(transformedData);
-      return { isNewUser: false };
+      
+      return {
+        user: transformedData,
+        isNewUser: false
+      };
+      
     } catch (error) {
-      if (auth.currentUser) await auth.signOut();
+      console.error('Google sign in error:', error);
+      // Handle specific error cases
+      if (error.code === 'auth/popup-closed-by-user') {
+        throw new Error(AUTH_NOTIFICATIONS.ERRORS.GOOGLE_POPUP_CLOSED);
+      }
+      throw error;
+    }
+  };
+
+  const linkedInSignIn = async (isSignUp = false) => {
+    try {
+      const provider = new OAuthProvider('linkedin.com');
+      provider.addScope('r_emailaddress');
+      provider.addScope('r_liteprofile');
+      
+      const result = await signInWithPopup(auth, provider);
+      
+      // Get or create user data
+      const userDoc = await getDoc(doc(db, 'users', result.user.uid));
+      const userData = userDoc.data();
+      
+      // If it's a new user and signing up
+      if (!userData && isSignUp) {
+        // Create user data structure
+        const userDataStructure = createUserDataStructure(result.user, {
+          provider: 'linkedin'
+        });
+        
+        // Create pending user document
+        await userOperations.createPendingUser(result.user.uid, userDataStructure);
+        
+        const transformedData = transformUserData(result.user, userDataStructure, true);
+        setUser({
+          ...transformedData,
+          isPending: true
+        });
+        
+        return { isNewUser: true, user: result.user };
+      }
+      
+      // Existing user or sign in
+      const transformedData = transformUserData(result.user, userData, userData?.isPending);
+      setUser(transformedData);
+      return { isNewUser: false, user: result.user };
+    } catch (error) {
+      console.error('LinkedIn sign in error:', error);
       throw error;
     }
   };
@@ -172,6 +267,8 @@ export const AuthProvider = ({ children }) => {
     try {
       await auth.signOut();
       setUser(null);
+      localStorage.removeItem('user');
+      showToast(AUTH_NOTIFICATIONS.LOGOUT.SUCCESS, 'success');
     } catch (error) {
       console.error('Signout error:', error);
       throw error;
@@ -182,46 +279,40 @@ export const AuthProvider = ({ children }) => {
     if (!user?.profile?.authUid) throw new Error('No authenticated user');
 
     try {
-      console.log('Updating profile with:', updates);
+      const userRef = doc(db, 'users', user.profile.authUid);
       
-      // Special handling for work experience updates
-      if (updates.profile?.workExperience) {
-        // Transform dates to Firestore timestamps
-        const workExperience = updates.profile.workExperience.map(exp => ({
-          ...exp,
-          // Only transform if the dates are not already Firestore timestamps
-          startDate: exp.startDate instanceof Date ? exp.startDate : new Date(exp.startDate),
-          endDate: exp.endDate ? (exp.endDate instanceof Date ? exp.endDate : new Date(exp.endDate)) : null
-        }));
+      // Get current user data
+      const userDoc = await getDoc(userRef);
+      const currentData = userDoc.data();
 
-        updates = {
-          ...updates,
-          profile: {
-            ...updates.profile,
-            workExperience
-          }
-        };
-      }
-
-      const updatedData = await userOperations.updateUserProfile(user.profile.authUid, updates);
-      
-      // Transform the updated data to maintain consistent structure
-      const newUserData = {
-        ...user,
-        ...updatedData,
-        profile: {
-          ...user.profile,
-          ...updatedData.profile
-        },
-        settings: {
-          ...user.settings,
-          ...updatedData.settings
-        }
+      // Merge profile sections data instead of overwriting
+      const updatedProfileSections = {
+        ...currentData.profileSections,
+        ...(updates.profileSections || {})
       };
-      
-      console.log('Updated user data:', newUserData);
-      setUser(newUserData);
-      return true;
+
+      const updateData = {
+        ...updates,
+        profileSections: updatedProfileSections,
+        lastUpdated: serverTimestamp()
+      };
+
+      // Remove profileData from the update if it exists
+      delete updateData.profileData;
+
+      await updateDoc(userRef, updateData);
+
+      // Update local user state with merged data
+      const updatedUser = {
+        ...user,
+        profileSections: updatedProfileSections
+      };
+
+      // Remove profileData from local state if it exists
+      delete updatedUser.profileData;
+
+      setUser(updatedUser);
+      return updatedUser;
     } catch (error) {
       console.error('Update profile error:', error);
       throw error;
@@ -241,26 +332,70 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const updateUserType = async (selectedType) => {
+    if (!user?.profile?.authUid) throw new Error('No authenticated user');
+
+    try {
+      const updatedData = await userOperations.updateUserType(user.profile.authUid, selectedType);
+      
+      // Transform and update local user state
+      const transformedData = transformUserData(auth.currentUser, updatedData, false);
+      setUser(transformedData);
+      
+      return transformedData;
+    } catch (error) {
+      console.error('Error updating user type:', error);
+      throw error;
+    }
+  };
+
+  const refreshUser = async () => {
+    if (!auth.currentUser) return null;
+
+    try {
+      const { data, isPending } = await userOperations.getUserData(auth.currentUser.uid);
+      if (data) {
+        // For Google users, always check for photoURL updates
+        if (data.profile?.provider === 'google.com' && auth.currentUser.photoURL) {
+          // Get fresh token to ensure photoURL is current
+          const freshPhotoURL = await auth.currentUser.getIdToken(true)
+            .then(() => auth.currentUser.photoURL);
+          
+          // Update if photoURL has changed
+          if (freshPhotoURL !== data.profile.photoURL) {
+            console.log('Updating Google user photo URL:', {
+              old: data.profile.photoURL,
+              new: freshPhotoURL
+            });
+            
+            await updateDoc(doc(db, 'users', auth.currentUser.uid), {
+              'profile.photoURL': freshPhotoURL
+            });
+            data.profile.photoURL = freshPhotoURL;
+          }
+        }
+        
+        const userData = transformUserData(auth.currentUser, data, isPending);
+        setUser(userData);
+        return userData;
+      }
+      return null;
+    } catch (error) {
+      console.error('Error refreshing user:', error);
+      return null;
+    }
+  };
+
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (authUser) => {
       if (authUser) {
         try {
           const { data, isPending } = await userOperations.getUserData(authUser.uid);
-          console.log('Auth State Changed - Raw Data:', { 
-            authUser: JSON.parse(JSON.stringify(authUser)), 
-            data: JSON.parse(JSON.stringify(data)), 
-            isPending 
-          });
-
+          
           if (data) {
             const userData = transformUserData(authUser, data, isPending);
-            console.log('Transformed User Data:', userData);
-            setUser({
-              ...userData,
-              isPending // Ensure isPending is set correctly
-            });
+            setUser(userData);
           } else {
-            console.log('No user data found, setting user to null');
             setUser(null);
           }
         } catch (error) {
@@ -268,7 +403,6 @@ export const AuthProvider = ({ children }) => {
           setUser(null);
         }
       } else {
-        console.log('No auth user, setting user to null');
         setUser(null);
       }
       setLoading(false);
@@ -283,12 +417,15 @@ export const AuthProvider = ({ children }) => {
     login,
     signup,
     googleSignIn,
+    linkedInSignIn,
     signOut,
     updateProfile,
     deleteAccount,
     setUser,
     requiresTwoFactor,
-    verifyTwoFactor
+    verifyTwoFactor,
+    updateUserType,
+    refreshUser
   };
 
   return (

@@ -1,0 +1,52 @@
+/**
+ * ConfirmationModal Component Styles
+ * 
+ * Features:
+ * - Compact design
+ * - Clean layout
+ * - Consistent spacing
+ */
+
+.confirmation-overlay {
+  @apply fixed inset-0 bg-black/50 
+         flex items-center justify-center
+         z-50 p-4;
+}
+
+.confirmation-modal {
+  @apply bg-white rounded-xl shadow-xl
+         w-full max-w-sm mx-auto;
+}
+
+.confirmation-header {
+  @apply flex justify-between items-center
+         px-6 py-4 border-b border-gray-200;
+}
+
+.confirmation-header h3 {
+  @apply text-xl font-semibold text-gray-800;
+}
+
+.confirmation-body {
+  @apply px-6 py-6;
+}
+
+.confirmation-message {
+  @apply text-gray-600 whitespace-pre-line leading-relaxed;
+}
+
+.confirmation-message strong {
+  @apply text-gray-800 font-medium;
+}
+
+.confirmation-footer {
+  @apply flex justify-end gap-3 px-6 py-4
+         border-t border-gray-200;
+}
+
+/* Responsive adjustments */
+@media (max-width: 640px) {
+  .confirmation-modal {
+    @apply mx-4;
+  }
+} 

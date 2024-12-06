@@ -75,6 +75,8 @@ export const applicationOperations = {
   // Update application
   async updateApplication(applicationId, updates) {
     try {
+      console.log('Updating application with data:', updates);
+      
       const applicationRef = doc(db, 'applications', applicationId);
       const updateData = {
         ...updates,
@@ -83,7 +85,19 @@ export const applicationOperations = {
       };
 
       await updateDoc(applicationRef, updateData);
-      return { id: applicationId, ...updateData };
+      
+      // Get the updated document to return the complete data
+      const updatedDoc = await getDoc(applicationRef);
+      const updatedData = updatedDoc.data();
+      
+      console.log('Updated application data:', updatedData);
+      
+      return { 
+        id: applicationId, 
+        ...updatedData,
+        // Ensure deadline is properly formatted
+        deadline: updatedData.deadline || null
+      };
     } catch (error) {
       console.error('Error updating application:', error);
       throw error;

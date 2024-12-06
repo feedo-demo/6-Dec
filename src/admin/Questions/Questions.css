@@ -1,0 +1,251 @@
+/**
+ * ProfileQuestions Component Styles
+ * 
+ * Features:
+ * - Clean layout design
+ * - Responsive grid
+ * - Profile type selection styling
+ * - Question list layout
+ * - Sorting indicators
+ * - Filter styling
+ * - Smooth transitions
+ * - Consistent spacing
+ */
+
+.profile-questions {
+  @apply p-6 max-w-7xl mx-auto;
+}
+
+.page-header {
+  @apply flex justify-between items-center mb-8;
+}
+
+.page-header h1 {
+  @apply text-2xl font-bold text-gray-800;
+}
+
+.profile-type-selector {
+  @apply mb-8;
+}
+
+.profile-type-selector h2 {
+  @apply text-xl font-semibold text-gray-700 mb-4;
+}
+
+.profile-type-buttons {
+  @apply grid grid-cols-2 md:grid-cols-4 gap-4 mb-8;
+}
+
+.profile-type-btn {
+  @apply w-full flex items-center gap-3 px-6 py-3 
+         text-gray-600 font-medium
+         border-2 border-gray-200 rounded-lg
+         hover:border-blue-500 hover:bg-blue-50
+         transition-all duration-200;
+}
+
+.profile-type-btn.active {
+  @apply border-blue-500 bg-blue-50 text-blue-600;
+}
+
+.questions-container {
+  @apply bg-white rounded-xl p-8 shadow-sm;
+}
+
+/* Questions List Styles */
+.questions-list {
+  @apply w-full;
+}
+
+.list-header {
+  @apply flex justify-between items-center mb-4;
+}
+
+.list-filters {
+  @apply flex flex-col gap-4 sm:flex-row sm:items-center;
+}
+
+.selected-profile-type {
+  @apply text-sm font-medium text-gray-600;
+}
+
+.selected-profile-type span {
+  @apply text-blue-600 capitalize;
+}
+
+.filter-controls {
+  @apply flex gap-4;
+}
+
+.list-actions {
+  @apply flex gap-2;
+}
+
+.list-content {
+  @apply min-h-[400px] flex items-center justify-center
+         border border-gray-100 rounded-lg;
+}
+
+.placeholder-message {
+  @apply text-center py-12;
+}
+
+.placeholder-message p {
+  @apply text-gray-600 text-lg mb-4;
+}
+
+.placeholder-message .placeholder-details {
+  @apply text-gray-500 text-base mb-2;
+}
+
+.placeholder-message ul {
+  @apply text-gray-500 space-y-2 
+         max-w-md mx-auto text-left 
+         list-disc list-inside;
+}
+
+/* Profile Type Item Styles */
+.profile-type-wrapper {
+  @apply relative;
+}
+
+.profile-type-actions {
+  @apply absolute right-2 top-1/2 -translate-y-1/2
+         flex items-center gap-2
+         opacity-0 transition-opacity duration-200;
+}
+
+.profile-type-wrapper:hover .profile-type-actions {
+  @apply opacity-100;
+}
+
+/* Update action icons styles */
+.action-icon {
+  @apply w-4 h-4 cursor-pointer text-gray-400 
+         hover:text-gray-600 transition-colors duration-200;
+}
+
+.action-icon.edit:hover {
+  @apply text-blue-500;
+}
+
+.action-icon.delete:hover {
+  @apply text-red-500;
+}
+
+/* Make icons more visible on hover */
+.profile-type-wrapper:hover .action-icon {
+  @apply text-gray-600;
+}
+
+.questions-content {
+  @apply bg-white rounded-xl p-8 shadow-sm;
+}
+
+.empty-profile-types {
+  @apply flex items-center justify-center min-h-[400px]
+         bg-gray-50 rounded-xl border-2 border-dashed border-gray-200;
+}
+
+.empty-content {
+  @apply text-center w-full max-w-md mx-auto px-4 py-8
+         flex flex-col items-center;
+}
+
+.empty-content h2 {
+  @apply text-xl font-semibold text-gray-800 mb-4;
+}
+
+.empty-content p {
+  @apply text-gray-600 max-w-md;
+}
+
+.empty-details {
+  @apply text-sm text-gray-500 mt-2 mb-4;
+}
+
+/* Hide the header button when there are no profile types */
+.questions-container:has(.empty-profile-types) .page-header .add-profile-button {
+  @apply hidden;
+}
+
+/* Add the same styling for the header button */
+.add-profile-button {
+  @apply min-w-[180px] justify-center;
+}
+
+.add-profile-button svg {
+  @apply mr-2;
+}
+
+/* Add these styles for the Add Profile Type button */
+.empty-content .admin-button {
+  @apply min-w-[180px] justify-center mt-4;
+}
+
+.empty-content .admin-button .button-content {
+  @apply flex items-center justify-center;
+}
+
+.empty-content .admin-button svg {
+  @apply mr-2;
+}
+
+/* Update the button styles in Questions.css */
+
+/* Add Profile Type button styles */
+.empty-content .admin-button,
+.add-profile-button {
+  @apply min-w-[180px] flex items-center justify-center;
+}
+
+.empty-content .admin-button svg,
+.add-profile-button svg {
+  @apply mr-2 h-[18px] w-[18px] relative -top-[1px];
+}
+
+/* Update the profile type button styles */
+.profile-type-btn.admin-button {
+  @apply w-full justify-center;
+}
+
+/* Update action button styles */
+.action-btn.admin-button {
+  @apply min-w-[100px];
+}
+
+/* Update the empty state styles */
+.empty-icon {
+  @apply text-5xl mb-4;
+}
+
+/* Add these styles */
+.profile-type-btn {
+  @apply flex items-center gap-2;
+}
+
+.profile-type-icon {
+  @apply w-5 h-5 text-current;
+}
+
+.profile-type-btn.active .profile-type-icon {
+  @apply text-blue-500;
+}
+
+.profile-type-btn:hover .profile-type-icon {
+  @apply text-blue-500;
+}
+
+/* Add these styles */
+.profile-type-content {
+  @apply flex items-center gap-3;
+}
+
+.profile-type-header {
+  @apply flex items-center gap-2;
+}
+
+.profile-type-label {
+  @apply font-medium;
+}
+  

@@ -1,0 +1,165 @@
+/* ProfilePhoto Component Styles */
+
+/* Container Sizes */
+.profile-photo-container {
+  position: relative;
+  display: inline-block;
+}
+
+.profile-photo-small {
+  width: 32px;
+  height: 32px;
+}
+
+.profile-photo-medium {
+  width: 96px;
+  height: 96px;
+}
+
+.profile-photo-large {
+  width: 128px;
+  height: 128px;
+}
+
+/* Photo Wrapper */
+.photo-wrapper {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  overflow: hidden;
+  background-color: #f3f4f6;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+}
+
+/* Photo */
+.photo {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0;
+  transition: all 0.3s ease;
+}
+
+.photo.loaded {
+  opacity: 1;
+}
+
+/* Placeholder */
+.photo-placeholder {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #f3f4f6;
+}
+
+.placeholder-icon {
+  width: 40%;
+  height: 40%;
+  color: #9ca3af;
+}
+
+/* Hover Effects */
+.profile-photo.hovered .photo-wrapper {
+  box-shadow: 0 8px 24px rgba(36, 107, 253, 0.2);
+}
+
+.profile-photo.hovered .photo {
+  transform: scale(1.1);
+}
+
+/* Photo Overlay */
+.photo-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(2px);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  cursor: pointer;
+}
+
+.photo-overlay:hover {
+  opacity: 1;
+}
+
+.overlay-icon {
+  color: white;
+  font-size: 24px;
+  margin-bottom: 4px;
+}
+
+.overlay-text {
+  color: white;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+/* Status Indicator */
+.status-indicator {
+  position: absolute;
+  bottom: -2px;
+  right: -2px;
+  width: 25%;
+  height: 25%;
+  min-width: 12px;
+  min-height: 12px;
+  background: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.status-dot {
+  width: 60%;
+  height: 60%;
+  background: #22c55e;
+  border-radius: 50%;
+  animation: pulse 2s infinite;
+}
+
+/* Loading State */
+.profile-photo-container.loading .photo {
+  opacity: 0.5;
+  filter: grayscale(50%);
+}
+
+.profile-photo-container.loading .overlay-icon {
+  animation: spin 1s linear infinite;
+}
+
+/* Animations */
+@keyframes pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.4);
+  }
+  70% {
+    box-shadow: 0 0 0 6px rgba(34, 197, 94, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(34, 197, 94, 0);
+  }
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .profile-photo-large {
+    width: 96px;
+    height: 96px;
+  }
+} 

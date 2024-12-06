@@ -7,48 +7,29 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useToast } from '../../../components/Toast/ToastContext';
+import { useToast } from '../../../../components/Toast/ToastContext';
 import './SubscriptionSection.css';
-import AddCardPopup from '../../../components/Popups/AddCardPopup/AddCardPopup';
-import { stripeApi } from '../../../api/stripe';
+import AddCardPopup from '../../../../components/Popups/AddCardPopup/AddCardPopup';
+import { stripeApi } from '../../../../api/stripe';
 import { FiLoader, FiCreditCard, FiCheck } from 'react-icons/fi';
-import StripeProvider from '../../../api/providers/StripeProvider';
-import PaymentOptionsPopup from '../../../components/Popups/PaymentOptionsPopup/PaymentOptionsPopup';
+import StripeProvider from '../../../../api/providers/StripeProvider';
+import PaymentOptionsPopup from '../../../../components/Popups/PaymentOptionsPopup/PaymentOptionsPopup';
 import { useAuth } from '../../../../auth/AuthContext';
+import { PAYMENT_NOTIFICATIONS } from '../../../../components/Toast/toastnotifications';
 
 const SubscriptionSection = () => {
   const [isAnnual, setIsAnnual] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isLoadingStatus, setIsLoadingStatus] = useState(true);
   const navigate = useNavigate();
   const toast = useToast();
   const [currentPlan, setCurrentPlan] = useState(null);
   const [showAddCardPopup, setShowAddCardPopup] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState(null);
-  const [showAcknowledgment, setShowAcknowledgment] = useState(false);
   const [hasPaymentMethods, setHasPaymentMethods] = useState(false);
   const [showPaymentOptions, setShowPaymentOptions] = useState(false);
   const [savedCards, setSavedCards] = useState([]);
   const { user } = useAuth();
-
-  // Fetch current subscription status
-  useEffect(() => {
-    const fetchSubscriptionStatus = async () => {
-      try {
-        // Get the selected plan from localStorage
-        const storedPlan = localStorage.getItem('selectedPlan');
-        const hasPaymentMethod = localStorage.getItem('hasPaymentMethod');
-
-        // If user has added a payment method and selected a plan, update the current plan
-        if (storedPlan && hasPaymentMethod === 'true') {
-          setCurrentPlan(storedPlan);
-        }
-      } catch (error) {
-        console.error('Error fetching subscription status:', error);
-      }
-    };
-
-    fetchSubscriptionStatus();
-  }, []);
 
   // Update useEffect to fetch saved cards using logged-in user data
   useEffect(() => {
@@ -59,17 +40,24 @@ const SubscriptionSection = () => {
           return;
         }
 
-        // Get or create customer using logged-in user's data
-        const customer = await stripeApi.getOrCreateCustomer(user.uid, user.email);
+        // Get user data from transformed structure
+        const userId = user.profile?.authUid;
+        const userEmail = user.profile?.email || user.email;
+
+        if (!userId || !userEmail) {
+          console.error('Missing user data:', { user });
+          return;
+        }
+
+        // Get or create customer using transformed user data
+        const customer = await stripeApi.getOrCreateCustomer(userId, userEmail);
 
         // Get the stored payment method status
-        const hasPaymentMethod = localStorage.getItem('hasPaymentMethod') === 'true';
+        const paymentMethods = await stripeApi.listPaymentMethods(customer.id);
+        const hasPaymentMethod = paymentMethods.length > 0;
         setHasPaymentMethods(hasPaymentMethod);
 
         if (hasPaymentMethod) {
-          // Fetch real payment methods from Stripe for the logged-in user
-          const paymentMethods = await stripeApi.listPaymentMethods(customer.id);
-          
           // Format the payment methods to match our card format
           const formattedCards = paymentMethods.map((pm, index) => ({
             id: pm.id,
@@ -77,7 +65,7 @@ const SubscriptionSection = () => {
             last4: pm.card.last4,
             expiry: `${String(pm.card.exp_month).padStart(2, '0')}/${String(pm.card.exp_year).slice(-2)}`,
             isDefault: index === 0,
-            cardHolder: pm.billing_details.name || user.profile?.fullName || 'Card Holder'
+            cardHolder: pm.billing_details.name || user.displayName || 'Card Holder'
           }));
 
           setSavedCards(formattedCards);
@@ -89,7 +77,91 @@ const SubscriptionSection = () => {
     };
 
     fetchSavedCards();
-  }, [user]); // Add user to dependency array
+  }, [user]);
+
+  // Update the checkSubscriptionStatus effect
+  useEffect(() => {
+    let isMounted = true;
+    let intervalId = null;
+    let retryCount = 0;
+    const MAX_RETRIES = 3;
+    
+    const checkSubscriptionStatus = async () => {
+      if (!user || !isMounted) return;
+      
+      try {
+        const userId = user.profile?.authUid;
+        const userEmail = user.profile?.email || user.email;
+
+        if (!userId || !userEmail) {
+          console.error('Missing user data:', { user });
+          return;
+        }
+
+        const customer = await stripeApi.getOrCreateCustomer(userId, userEmail);
+        const subscriptionDetails = await stripeApi.getSubscriptionDetails(customer.id);
+        
+        if (subscriptionDetails && isMounted) {
+          console.log('Subscription details:', subscriptionDetails);
+          
+          if (subscriptionDetails.status === 'active') {
+            setCurrentPlan(subscriptionDetails.planName);
+            console.log('Active subscription found:', subscriptionDetails.planName);
+            // Clear interval once we confirm active subscription
+            if (intervalId) {
+              clearInterval(intervalId);
+              intervalId = null;
+            }
+          } else {
+            console.log('Subscription status:', subscriptionDetails.status);
+            setCurrentPlan(null);
+          }
+          // Reset retry count on successful check
+          retryCount = 0;
+        } else {
+          console.log('No active subscription found');
+          if (isMounted) setCurrentPlan(null);
+        }
+      } catch (error) {
+        console.error('Error checking subscription status:', error);
+        if (isMounted) {
+          retryCount++;
+          if (retryCount >= MAX_RETRIES) {
+            console.log('Max retries reached, stopping subscription checks');
+            if (intervalId) {
+              clearInterval(intervalId);
+              intervalId = null;
+            }
+          }
+          setCurrentPlan(null);
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoadingStatus(false);
+        }
+      }
+    };
+
+    // Set loading state
+    setIsLoadingStatus(true);
+    
+    // Initial check
+    checkSubscriptionStatus();
+
+    // Set up polling with shorter interval during subscription creation
+    intervalId = setInterval(checkSubscriptionStatus, 3000);
+
+    return () => {
+      isMounted = false;
+      if (intervalId) {
+        clearInterval(intervalId);
+      }
+      setShowPaymentOptions(false);
+      setShowAddCardPopup(false);
+      setIsProcessing(false);
+      setIsLoadingStatus(false);
+    };
+  }, [user]);
 
   const handleUpgrade = async (planName) => {
     try {
@@ -100,7 +172,7 @@ const SubscriptionSection = () => {
       if (hasPaymentMethods) {
         setShowPaymentOptions(true);
       } else {
-        // If no saved cards, show add card popup
+        // If no saved cards, directly show add card popup
         setShowAddCardPopup(true);
       }
     } catch (error) {
@@ -117,17 +189,22 @@ const SubscriptionSection = () => {
         throw new Error('No authenticated user found');
       }
 
+      // Get user data from transformed structure
+      const userId = user.profile?.authUid;
+      const userEmail = user.profile?.email || user.email;
+
+      if (!userId || !userEmail) {
+        throw new Error('Missing user data');
+      }
+
       // Get or create customer
-      const customer = await stripeApi.getOrCreateCustomer(user.uid, user.email);
+      const customer = await stripeApi.getOrCreateCustomer(userId, userEmail);
       
       // Add payment method
       await stripeApi.addPaymentMethod(customer.id, paymentMethodId);
       
       // Set this card as default
       await stripeApi.setDefaultPaymentMethod(customer.id, paymentMethodId);
-      
-      // Update local storage to indicate payment method is added
-      localStorage.setItem('hasPaymentMethod', 'true');
       
       // Only update subscription if we have a selected plan
       if (selectedPlan) {
@@ -140,16 +217,12 @@ const SubscriptionSection = () => {
           
           // Update UI state
           setCurrentPlan(selectedPlan);
-          localStorage.setItem('selectedPlan', selectedPlan);
           
           toast.showSuccess(
             `Successfully subscribed to ${selectedPlan} plan${isAnnual ? ' (Annual)' : ' (Monthly)'}`
           );
           
-          setShowAcknowledgment(true);
-          setTimeout(() => {
-            setShowAcknowledgment(false);
-          }, 5000);
+          setShowAddCardPopup(false);
         } catch (subscriptionError) {
           console.error('Subscription error:', subscriptionError);
           toast.showError('Failed to create subscription. Please try again.');
@@ -168,7 +241,8 @@ const SubscriptionSection = () => {
   const handleClosePopup = () => {
     setShowAddCardPopup(false);
     setShowPaymentOptions(false);
-    setSelectedPlan(null); // Reset selected plan when closing popup
+    setSelectedPlan(null);
+    setIsProcessing(false);
   };
 
   const handleCardSelection = async (card) => {
@@ -182,54 +256,92 @@ const SubscriptionSection = () => {
         return;
       }
 
-      // Get price ID based on plan and billing interval
+      setIsProcessing(true);
       const priceId = getPriceId(selectedPlan, isAnnual);
       
-      // Get customer
-      const customer = await stripeApi.getOrCreateCustomer(user.uid, user.email);
-      
-      // Set the selected card as default payment method
-      await stripeApi.setDefaultPaymentMethod(customer.id, card.id);
-      
-      // Create subscription with the selected card
-      await stripeApi.createSubscription(customer.id, priceId);
-      
-      // Update UI state
-      setCurrentPlan(selectedPlan);
-      localStorage.setItem('selectedPlan', selectedPlan);
-      
-      toast.showSuccess(
-        `Successfully subscribed to ${selectedPlan} plan${isAnnual ? ' (Annual)' : ' (Monthly)'}`
-      );
-      
-      setShowAcknowledgment(true);
-      setTimeout(() => {
-        setShowAcknowledgment(false);
-      }, 5000);
+      try {
+        // Get customer
+        const customer = await stripeApi.getOrCreateCustomer(
+          user.profile?.authUid,
+          user.profile?.email || user.email
+        );
 
-      // Close the payment options popup
-      setShowPaymentOptions(false);
+        // Create new subscription with the selected card
+        console.log('Creating subscription with:', {
+          customerId: customer.id,
+          priceId,
+          paymentMethodId: card.id
+        });
+
+        const { subscription } = await stripeApi.createSubscription(
+          customer.id,
+          priceId,
+          card.id
+        );
+
+        if (!subscription) {
+          throw new Error('Failed to create subscription');
+        }
+
+        console.log('Subscription created:', subscription);
+
+        // Check subscription status
+        if (subscription.status === 'active') {
+          // Update local state immediately
+          setCurrentPlan(selectedPlan);
+          
+          // Show success message
+          toast.showToast(
+            PAYMENT_NOTIFICATIONS.SUBSCRIPTION.SUCCESS(
+              selectedPlan,
+              isAnnual ? 'annual' : 'monthly',
+              isAnnual ? plans.find(p => p.name === selectedPlan)?.annualPrice : plans.find(p => p.name === selectedPlan)?.monthlyPrice
+            ),
+            'success'
+          );
+
+          // Close popup and reset state
+          setShowPaymentOptions(false);
+          setSelectedPlan(null);
+        } else {
+          throw new Error(
+            subscription.lastPaymentError || 
+            'Subscription creation failed. Please try again.'
+          );
+        }
+      } catch (subscriptionError) {
+        console.error('Subscription error:', subscriptionError);
+        toast.showError(
+          subscriptionError.message || 
+          PAYMENT_NOTIFICATIONS.SUBSCRIPTION.ERROR
+        );
+        throw subscriptionError;
+      }
     } catch (error) {
       console.error('Error processing subscription:', error);
-      toast.showError('Failed to process payment. Please try again.');
+      toast.showError(
+        error.message || 
+        PAYMENT_NOTIFICATIONS.SUBSCRIPTION.UPGRADE_ERROR
+      );
+    } finally {
+      setIsProcessing(false);
     }
   };
 
   // Helper function to get Stripe price ID
   const getPriceId = (planName, isAnnual) => {
-    // Replace these with your actual Stripe price IDs from your dashboard
     const priceIds = {
       Basic: {
-        monthly: 'price_YOUR_BASIC_MONTHLY_ID',    // Replace with your Basic Monthly price ID
-        annual: 'price_YOUR_BASIC_ANNUAL_ID'       // Replace with your Basic Annual price ID
+        monthly: 'price_1QL8zXP4XnLL74v7J9AEiZGD',
+        annual: 'price_1QL90kP4XnLL74v7Opo8DQtM'
       },
-      Premium: {
-        monthly: 'price_YOUR_PREMIUM_MONTHLY_ID',  // Replace with your Premium Monthly price ID
-        annual: 'price_YOUR_PREMIUM_ANNUAL_ID'     // Replace with your Premium Annual price ID
+      Professional: {
+        monthly: 'price_1QL901P4XnLL74v79lxHKs1W',
+        annual: 'price_1QL91HP4XnLL74v7nAaHOkPS'
       },
-      Business: {
-        monthly: 'price_YOUR_BUSINESS_MONTHLY_ID', // Replace with your Business Monthly price ID
-        annual: 'price_YOUR_BUSINESS_ANNUAL_ID'    // Replace with your Business Annual price ID
+      Enterprise: {
+        monthly: 'price_1QL90HP4XnLL74v7UXswWUzr',
+        annual: 'price_1QL91fP4XnLL74v77CHQNSWb'
       }
     };
 
@@ -239,8 +351,8 @@ const SubscriptionSection = () => {
   const plans = [
     {
       name: 'Basic',
-      monthlyPrice: 0,
-      annualPrice: 0,
+      monthlyPrice: 19.00,
+      annualPrice: 190.00,
       features: [
         'Basic Resume Builder',
         '10 Job Applications/month',
@@ -249,12 +361,12 @@ const SubscriptionSection = () => {
         'Email Support'
       ],
       popular: false,
-      active: currentPlan === 'Basic',
+      active: currentPlan?.toLowerCase() === 'basic',
     },
     {
-      name: 'Premium',
-      monthlyPrice: 19.99,
-      annualPrice: 199.99,
+      name: 'Professional',
+      monthlyPrice: 49.00,
+      annualPrice: 390.00,
       features: [
         'Advanced Resume Builder',
         'Unlimited Job Applications',
@@ -265,14 +377,14 @@ const SubscriptionSection = () => {
         'Career Path Planning'
       ],
       popular: true,
-      active: currentPlan === 'Premium',
+      active: currentPlan?.toLowerCase() === 'professional',
     },
     {
-      name: 'Business',
-      monthlyPrice: 49.99,
-      annualPrice: 499.99,
+      name: 'Enterprise',
+      monthlyPrice: 99.00,
+      annualPrice: 1000.00,
       features: [
-        'Everything in Premium',
+        'Everything in Professional',
         'Multiple Team Members',
         'Team Analytics',
         'Custom Branding',
@@ -282,29 +394,22 @@ const SubscriptionSection = () => {
         'Custom Features'
       ],
       popular: false,
-      active: currentPlan === 'Business',
+      active: currentPlan?.toLowerCase() === 'enterprise',
     },
   ];
 
+  // Add debug logging for subscription status
+  useEffect(() => {
+    console.log('Current Plan:', currentPlan);
+    console.log('Plans Status:', plans.map(p => ({ 
+      name: p.name, 
+      active: p.active,
+      matches: p.name.toLowerCase() === currentPlan?.toLowerCase()
+    })));
+  }, [currentPlan]);
+
   return (
     <section className="section-wrapper">
-      {showAcknowledgment && (
-        <motion.div 
-          className="acknowledgment-banner"
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -20 }}
-        >
-          <div className="acknowledgment-content">
-            <FiCheck className="acknowledgment-icon" />
-            <div className="acknowledgment-text">
-              <h4>Subscription Activated!</h4>
-              <p>You are now subscribed to the {currentPlan} plan{isAnnual ? ' (Annual)' : ' (Monthly)'}.</p>
-            </div>
-          </div>
-        </motion.div>
-      )}
-
       <div className="background-animation" />
       
       <div className="toggle-container">
@@ -352,30 +457,24 @@ const SubscriptionSection = () => {
                 <h3>{plan.name}</h3>
                 <p className="description">
                   {plan.name === 'Basic' && 'Perfect for getting started'}
-                  {plan.name === 'Premium' && 'Best for professionals'}
-                  {plan.name === 'Business' && 'For teams and businesses'}
+                  {plan.name === 'Professional' && 'Best for professionals'}
+                  {plan.name === 'Enterprise' && 'For teams and businesses'}
                 </p>
                 <div className="price-tag">
                   {plan.monthlyPrice > 0 && <span>$</span>}
                   <AnimatePresence mode="wait">
                     <motion.span
                       className="amount"
-                      data-price={plan.monthlyPrice}
                       key={isAnnual ? 'annual' : 'monthly'}
                       initial={{ opacity: 0, y: -20, scale: 0.95 }}
                       animate={{ opacity: 1, y: 0, scale: 1 }}
                       exit={{ opacity: 0, y: 20, scale: 0.95 }}
-                      transition={{ 
-                        duration: 0.4,
-                        ease: [0.34, 1.56, 0.64, 1]
-                      }}
+                      transition={{ duration: 0.4, ease: [0.34, 1.56, 0.64, 1] }}
                     >
-                      {plan.monthlyPrice === 0 ? 'Free' : (isAnnual ? plan.annualPrice : plan.monthlyPrice)}
+                      {isAnnual ? plan.annualPrice : plan.monthlyPrice}
                     </motion.span>
                   </AnimatePresence>
-                  {plan.monthlyPrice > 0 && (
-                    <span className="period">{isAnnual ? '/year' : '/mo'}</span>
-                  )}
+                  <span className="period">{isAnnual ? '/year' : '/mo'}</span>
                 </div>
                 <ul className="features-list">
                   {plan.features.map((feature) => (
@@ -387,27 +486,29 @@ const SubscriptionSection = () => {
                 </ul>
                 <button 
                   className={`select-button ${plan.popular ? 'popular' : ''} ${plan.active ? 'active' : ''}`}
-                  disabled={plan.active || isProcessing}
+                  disabled={plan.active || isProcessing || isLoadingStatus}
                   onClick={() => handleUpgrade(plan.name)}
                 >
-                  {plan.active ? 'Current Plan' : (
-                    isProcessing ? (
-                      <span className="flex items-center justify-center gap-2">
-                        <FiLoader className="animate-spin" />
-                        Processing...
-                      </span>
-                    ) : (
-                      <span className="flex items-center justify-center gap-2">
-                        {plan.name === 'Basic' ? (
-                          'Get Started Free'
-                        ) : (
-                          <>
-                            <FiCreditCard />
-                            {hasPaymentMethods ? 'Upgrade Now' : 'Add Payment Method'}
-                          </>
-                        )}
-                      </span>
-                    )
+                  {isLoadingStatus ? (
+                    <span className="flex items-center justify-center gap-2">
+                      <FiLoader className="animate-spin" />
+                      Loading...
+                    </span>
+                  ) : plan.active ? (
+                    <span className="flex items-center justify-center gap-2">
+                      <FiCheck />
+                      Current Plan
+                    </span>
+                  ) : isProcessing ? (
+                    <span className="flex items-center justify-center gap-2">
+                      <FiLoader className="animate-spin" />
+                      Processing...
+                    </span>
+                  ) : (
+                    <span className="flex items-center justify-center gap-2">
+                      <FiCreditCard />
+                      Subscribe
+                    </span>
                   )}
                 </button>
               </div>

@@ -1,28 +1,37 @@
-import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate, Outlet } from 'react-router-dom';
+import React, { useEffect } from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate, Outlet, useNavigate } from 'react-router-dom';
 // Import Firebase config
 import './firebase/config';
 // AuthContext import to handle authentication
 import { AuthProvider, useAuth } from './auth/AuthContext';
-import { ToastContainer } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
+import { ToastProvider } from './components/Toast/ToastContext';
 
 // Import components after context
-import Layout from './backend/components/Layout/Layout';
+import Layout from './components/Layout/Layout';
 import Dashboard from './backend/pages/Dashboard/Dashboard';
 import MyApplications from './backend/pages/MyApplications/MyApplications';
 import NewOpportunities from './backend/pages/NewOpportunities/NewOpportunities';
 import DataManagement from './backend/pages/DataManagement/DataManagement';
 import Subscription from './backend/pages/Subscription/Subscription';
-import Signup from './frontend/pages/Signup/Signup';
-import Login from './frontend/pages/Login/Login';
+import LoginSignup from './frontend/pages/LoginSignup/LoginSignup';
 import Settings from './backend/pages/Settings/Settings';
 import HelpCenter from './backend/pages/HelpCenter/HelpCenter';
 import ProfileType from './frontend/pages/ProfileType/ProfileType';
 
+// Import Admin components
+import AdminLogin from './admin/AdminLogin/AdminLogin';
+import AdminDashboard from './admin/AdminDashboard/AdminDashboard';
+import AdminLayout from './admin/AdminLayout/AdminLayout';
+
+// Import AdminAuthProvider
+import { AdminAuthProvider, useAdminAuth } from './admin/AdminAuth/AdminAuthContext';
+
 // Import styles last
 import './App.css';
-import './backend/components/Header/DashboardHeader.css';
+import './components/Header/DashboardHeader.css';
+
+// Import ProfileQuestions component
+import ProfileQuestions from './admin/Questions/Questions';
 
 // Move ProtectedRoute component definition here
 const ProtectedRoute = ({ children }) => {
@@ -37,7 +46,7 @@ const ProtectedRoute = ({ children }) => {
   }
 
   if (!user) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/" replace />;
   }
 
   return children;
@@ -54,58 +63,69 @@ const ProtectedLayout = () => {
   );
 };
 
+// Update AdminRoute component to use AdminAuthContext
+const AdminRoute = ({ children }) => {
+  const { adminUser, loading } = useAdminAuth();
+  const navigate = useNavigate();
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+      </div>
+    );
+  }
+
+  if (!adminUser) {
+    return <Navigate to="/admin/login" replace />;
+  }
+
+  return children;
+};
+
+// Add AdminLayout component wrapper
+const AdminLayoutWrapper = () => {
+  return (
+    <AdminRoute>
+      <AdminLayout>
+        <Outlet />
+      </AdminLayout>
+    </AdminRoute>
+  );
+};
+
 // App component definition last
 const App = () => {
   return (
-    <AuthProvider>
-      <Router>
-        <div className="App">
-          <Routes>
-            {/* Change only this line to redirect to Login */}
-            <Route path="/" element={<Navigate to="/login" replace />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/signup" element={<Signup />} />
-            
-            {/* Protected routes wrapped in Layout */}
-            <Route element={<ProtectedLayout />}>
-              <Route path="/dashboard" element={<Dashboard />} />
-              <Route path="/my-applications" element={<MyApplications />} />
-              <Route path="/new-opportunities" element={<NewOpportunities />} />
-              <Route path="/data-management" element={<DataManagement />} />
-              <Route path="/subscription" element={<Subscription />} />
-              <Route path="/settings" element={<Settings />} />
-              <Route path="/help-center" element={<HelpCenter />} />
-            </Route>
-
-            {/* Protected route for profile type */}
-            <Route 
-              path="/profile-type" 
-              element={
-                <ProtectedRoute>
-                  <ProfileType />
-                </ProtectedRoute>
-              } 
-            />
-
-            {/* Fallback route */}
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
-
-          {/* Add ToastContainer */}
-          <ToastContainer 
-            position="top-right"
-            autoClose={3000}
-            hideProgressBar={false}
-            newestOnTop
-            closeOnClick
-            rtl={false}
-            pauseOnFocusLoss
-            draggable
-            pauseOnHover
-          />
-        </div>
-      </Router>
-    </AuthProvider>
+    <Router>
+      <ToastProvider>
+        <AuthProvider>
+          <AdminAuthProvider>
+            <div className="App">
+              <Routes>
+                <Route path="/" element={<LoginSignup />} />
+                <Route path="/admin/login" element={<AdminLogin />} />
+                <Route element={<AdminLayoutWrapper />}>
+                  <Route path="/admin/dashboard" element={<AdminDashboard />} />
+                  <Route path="/admin/questions" element={<ProfileQuestions />} />
+                  <Route path="/admin/data-management" element={<DataManagement />} />
+                </Route>
+                <Route element={<ProtectedLayout />}>
+                  <Route path="/dashboard" element={<Dashboard />} />
+                  <Route path="/my-applications" element={<MyApplications />} />
+                  <Route path="/new-opportunities" element={<NewOpportunities />} />
+                  <Route path="/data-management" element={<DataManagement />} />
+                  <Route path="/subscription" element={<Subscription />} />
+                  <Route path="/settings" element={<Settings />} />
+                  <Route path="/help-center" element={<HelpCenter />} />
+                </Route>
+                <Route path="/profile-type" element={<ProfileType />} />
+              </Routes>
+            </div>
+          </AdminAuthProvider>
+        </AuthProvider>
+      </ToastProvider>
+    </Router>
   );
 };
 

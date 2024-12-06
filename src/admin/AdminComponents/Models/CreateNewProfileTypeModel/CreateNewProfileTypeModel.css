@@ -1,0 +1,196 @@
+/**
+ * ProfileSectionModal Component Styles
+ * 
+ * Features:
+ * - Modal overlay with backdrop blur
+ * - Clean modal design
+ * - Form layout and spacing
+ * - Icon grid styling
+ * - Responsive design
+ */
+
+/* Modal Overlay */
+.modal-overlay {
+  @apply fixed inset-0 flex items-center justify-center z-50 p-4
+         bg-black/50 backdrop-blur-sm;
+}
+
+/* Modal Container */
+.section-modal {
+  @apply bg-white rounded-xl shadow-xl w-full max-w-3xl
+         max-h-[90vh] overflow-y-auto;
+}
+
+/* Modal Header */
+.modal-header {
+  @apply flex items-center justify-between p-6 
+         border-b border-gray-200 bg-white sticky top-0 z-10;
+}
+
+.modal-header h2 {
+  @apply text-xl font-semibold text-gray-800;
+}
+
+.close-button {
+  @apply p-2 text-gray-500 hover:text-gray-700
+         rounded-lg hover:bg-gray-100
+         transition-colors duration-200;
+}
+
+/* Form Layout */
+.section-modal-form {
+  @apply p-6 space-y-8;
+}
+
+.form-section {
+  @apply space-y-6;
+}
+
+/* Form Groups */
+.form-group {
+  @apply space-y-2;
+}
+
+.form-group label {
+  @apply block text-sm font-medium text-gray-700;
+}
+
+.form-group input {
+  @apply w-full px-4 py-2 border border-gray-300 rounded-lg
+         focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500
+         transition-all duration-200;
+}
+
+.helper-text {
+  @apply text-sm text-gray-500;
+}
+
+/* Icon Search */
+.icon-search-container {
+  @apply space-y-4;
+}
+
+.search-input-wrapper {
+  @apply relative;
+}
+
+.search-icon {
+  @apply absolute left-3 top-1/2 -translate-y-1/2 text-gray-400;
+}
+
+.icon-search-input {
+  @apply w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg
+         focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500
+         transition-all duration-200;
+}
+
+.clear-search {
+  @apply absolute right-3 top-1/2 -translate-y-1/2
+         text-gray-400 hover:text-gray-600
+         transition-colors duration-200;
+}
+
+/* Icon Grid */
+.icon-grid {
+  @apply grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-4 
+         max-h-[300px] overflow-y-auto p-4
+         border border-gray-200 rounded-lg;
+}
+
+.icon-option {
+  @apply flex flex-col items-center gap-2 p-3
+         border border-gray-200 rounded-lg
+         hover:border-blue-500 hover:bg-blue-50
+         transition-all duration-200;
+}
+
+.icon-option.selected {
+  @apply border-blue-500 bg-blue-50;
+}
+
+.icon-option .icon {
+  @apply w-6 h-6 text-gray-600;
+}
+
+.icon-option .icon-label {
+  @apply text-xs text-gray-600 text-center;
+}
+
+/* Selected Icon Display */
+.selected-icon-display {
+  @apply flex items-center gap-3 p-4 
+         border border-gray-200 rounded-lg;
+}
+
+.current-icon {
+  @apply w-6 h-6 text-gray-600;
+}
+
+.icon-label {
+  @apply text-sm text-gray-600;
+}
+
+/* No Results State */
+.no-results {
+  @apply text-center py-8 text-gray-500;
+}
+
+/* Section Header */
+.section-header {
+  @apply flex items-center justify-between mb-4;
+}
+
+.section-header h3 {
+  @apply flex items-center gap-2 text-lg font-semibold text-gray-800;
+}
+
+.section-counter {
+  @apply text-sm text-gray-500 ml-2;
+}
+
+/* Sections List */
+.sections-list {
+  @apply space-y-4;
+}
+
+.section-item {
+  @apply flex items-start gap-4 p-4 
+         bg-gray-50 rounded-lg border border-gray-200;
+}
+
+.section-inputs {
+  @apply flex-1;
+}
+
+.remove-section-button {
+  @apply p-2 text-gray-400 hover:text-red-500
+         rounded-lg hover:bg-gray-100
+         transition-colors duration-200;
+}
+
+/* Modal Footer */
+.modal-footer {
+  @apply flex justify-end gap-3 p-6 
+         border-t border-gray-200 bg-white
+         sticky bottom-0;
+}
+
+/* Error States */
+.error-message {
+  @apply flex items-center gap-1 text-sm text-red-500 mt-1;
+}
+
+.error {
+  @apply border-red-500 focus:ring-red-500/20 focus:border-red-500;
+}
+
+/* Responsive Design */
+@media (max-width: 640px) {
+  .section-modal {
+    @apply max-h-[95vh];
+  }
+
+  .icon-grid {
+    @apply grid-cols-3;
+  }
+}

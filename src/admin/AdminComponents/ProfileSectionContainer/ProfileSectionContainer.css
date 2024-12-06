@@ -1,0 +1,85 @@
+/**
+ * Profile Section Styles
+ * 
+ * Features:
+ * - Horizontal section styling with overflow menu
+ * - Responsive design
+ * - Active state indicators
+ * - Dropdown styling
+ */
+
+/* Section Container Wrapper */
+.sections-wrapper {
+  @apply relative w-full mb-6;
+}
+
+/* Main sections container */
+.sections-container {
+  @apply flex flex-row items-center
+         border-b border-gray-200 pb-px
+         relative;
+}
+
+/* Individual section buttons */
+.section-btn {
+  @apply px-4 py-2 text-sm font-medium text-gray-600
+         border-b-2 border-transparent
+         hover:text-gray-900 hover:border-gray-300
+         transition-all duration-200
+         focus:outline-none focus:ring-2 focus:ring-blue-500/20
+         whitespace-nowrap;
+}
+
+.section-btn.active {
+  @apply text-blue-600 font-semibold border-blue-500;
+}
+
+/* More button styling */
+.more-btn {
+  @apply flex items-center gap-1;
+}
+
+/* More sections dropdown wrapper */
+.more-sections-wrapper {
+  @apply relative;
+}
+
+/* Dropdown menu */
+.more-sections-dropdown {
+  @apply absolute top-full right-0 mt-1
+         bg-white rounded-lg shadow-lg
+         border border-gray-200
+         py-1 min-w-[200px]
+         z-50;
+}
+
+/* Dropdown items */
+.dropdown-item {
+  @apply w-full px-4 py-2 text-sm text-left
+         text-gray-700 hover:bg-gray-50
+         transition-colors duration-150
+         flex items-center gap-2;
+}
+
+.dropdown-item.active {
+  @apply bg-blue-50 text-blue-600 font-medium;
+}
+
+/* Loading container */
+.loading-container {
+  @apply flex flex-col items-center justify-center
+         min-h-[200px] text-gray-500;
+}
+
+/* Section content */
+.section-content {
+  @apply bg-white rounded-lg p-6
+         border border-gray-200 mt-4;
+}
+
+/* Responsive adjustments */
+@media (max-width: 640px) {
+  .section-btn {
+    @apply px-3 py-1.5 text-xs;
+  }
+} 

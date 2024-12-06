@@ -1,0 +1,338 @@
+/**
+ * SkeletonLoading Component Styles
+ * 
+ * Features:
+ * - Animated loading states for multiple UI patterns
+ * - Shimmer effect
+ * - Responsive design
+ * - Supports payment and data submission layouts
+ * - Configurable animations
+ */
+
+.skeleton-container {
+  @apply w-full animate-pulse;
+}
+
+/* Header Skeleton */
+.skeleton-header {
+  @apply flex justify-between items-start mb-8;
+}
+
+.skeleton-title-group {
+  @apply space-y-2;
+}
+
+.skeleton-title {
+  @apply h-7 w-48 bg-gray-200 rounded-lg;
+}
+
+.skeleton-subtitle {
+  @apply h-4 w-64 bg-gray-200 rounded-lg;
+}
+
+.skeleton-button {
+  @apply h-10 w-32 bg-gray-200 rounded-lg;
+}
+
+/* Cards Skeleton */
+.skeleton-cards {
+  @apply grid grid-cols-1 md:grid-cols-2 gap-6 mb-8;
+}
+
+.skeleton-card {
+  @apply p-6 rounded-xl border border-gray-200 space-y-4;
+}
+
+.skeleton-card-logo {
+  @apply h-8 w-12 bg-gray-200 rounded-lg mb-4;
+}
+
+.skeleton-card-number {
+  @apply h-6 w-36 bg-gray-200 rounded-lg;
+}
+
+.skeleton-card-details {
+  @apply space-y-2;
+}
+
+.skeleton-text-short {
+  @apply h-4 w-24 bg-gray-200 rounded-lg;
+}
+
+.skeleton-text-medium {
+  @apply h-4 w-32 bg-gray-200 rounded-lg;
+}
+
+.skeleton-card-actions {
+  @apply flex justify-between items-center pt-4 border-t border-gray-100;
+}
+
+.skeleton-button-small {
+  @apply h-8 w-24 bg-gray-200 rounded-lg;
+}
+
+.skeleton-button-icon {
+  @apply h-8 w-8 bg-gray-200 rounded-full;
+}
+
+/* Billing History Skeleton */
+.skeleton-billing {
+  @apply space-y-4;
+}
+
+.skeleton-billing-title {
+  @apply h-6 w-36 bg-gray-200 rounded-lg mb-6;
+}
+
+.skeleton-billing-item {
+  @apply flex items-center justify-between p-4 border border-gray-100 rounded-lg;
+}
+
+/* Shimmer Animation */
+@keyframes shimmer {
+  0% {
+    background-position: -1000px 0;
+  }
+  100% {
+    background-position: 1000px 0;
+  }
+}
+
+.skeleton-container [class*="skeleton-"] {
+  background: linear-gradient(
+    90deg,
+    rgba(229, 231, 235, 0.6) 0%,
+    rgba(229, 231, 235, 0.8) 50%,
+    rgba(229, 231, 235, 0.6) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite linear;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .skeleton-cards {
+    @apply grid-cols-1;
+  }
+
+  .skeleton-billing-item {
+    @apply flex-col gap-3;
+  }
+}
+
+/* Data Submission Skeleton Styles */
+.skeleton-container.data-submission {
+  @apply fixed right-2 top-24 w-72 bg-white rounded-lg border border-gray-200;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  animation: slideIn 0.3s ease-out forwards;
+}
+
+/* Add entrance animation */
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Update the shimmer animation for better performance */
+.skeleton-container.data-submission [class*="skeleton-"] {
+  background: linear-gradient(
+    90deg,
+    rgba(229, 231, 235, 0.6) 25%,
+    rgba(229, 231, 235, 0.8) 37%,
+    rgba(229, 231, 235, 0.6) 63%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite linear;
+}
+
+/* Ensure the skeleton items have proper spacing */
+.skeleton-submission-items {
+  @apply px-4 pb-4 space-y-3;
+}
+
+.skeleton-submission-item {
+  @apply w-full flex items-center justify-between p-3 rounded-lg;
+  background: white;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  min-height: 60px;
+}
+
+.skeleton-data-header {
+  @apply p-4 border-b border-gray-200;
+}
+
+.skeleton-data-title {
+  @apply h-6 w-32 bg-gray-200 rounded-lg;
+}
+
+.skeleton-profile-section {
+  @apply p-4 flex flex-col items-center text-center;
+}
+
+.skeleton-avatar-container {
+  @apply relative;
+  width: 120px;
+  height: 120px;
+}
+
+.skeleton-avatar {
+  @apply w-full h-full rounded-full bg-gray-200;
+}
+
+.skeleton-progress-circle {
+  @apply absolute -top-2 -left-2 -right-2 -bottom-2 rounded-full;
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: shimmer 2s infinite linear;
+}
+
+.skeleton-profile-info {
+  @apply mt-4 space-y-2;
+}
+
+.skeleton-profile-name {
+  @apply h-6 w-36 bg-gray-200 rounded-lg mx-auto;
+}
+
+.skeleton-profile-type {
+  @apply h-4 w-24 bg-gray-200 rounded-lg mx-auto mt-2;
+}
+
+.skeleton-item-content {
+  @apply flex items-center gap-3;
+}
+
+.skeleton-status-icon {
+  @apply w-5 h-5 rounded-full bg-gray-200;
+}
+
+.skeleton-item-text {
+  @apply space-y-2;
+}
+
+.skeleton-item-title {
+  @apply h-4 w-24 bg-gray-200 rounded-lg;
+}
+
+.skeleton-item-label {
+  @apply h-3 w-20 bg-gray-200 rounded-lg;
+}
+
+.skeleton-chevron {
+  @apply w-4 h-4 bg-gray-200 rounded-lg;
+}
+
+/* Recent Activity Skeleton Styles */
+.skeleton-container.recent-activity {
+  @apply w-full max-w-[calc(100%-288px)] bg-white rounded-2xl mt-6 mb-6 p-6 border border-gray-200;
+  animation: fadeIn 0.6s ease-out;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.skeleton-activity-header {
+  @apply flex items-center justify-between mb-3;
+}
+
+.skeleton-activity-title {
+  @apply h-7 w-48 bg-gray-200 rounded-lg;
+}
+
+.skeleton-activity-list {
+  @apply space-y-2;
+}
+
+.skeleton-activity-item {
+  @apply flex items-center gap-3 py-2 px-3 rounded-xl;
+  animation: slideInFromRight 0.5s ease-out forwards;
+  opacity: 0;
+}
+
+.skeleton-activity-icon {
+  @apply w-8 h-8 bg-gray-200 rounded-full;
+}
+
+.skeleton-activity-content {
+  @apply flex-1 flex items-center justify-between gap-4;
+}
+
+.skeleton-activity-text {
+  @apply flex-1 space-y-2;
+}
+
+.skeleton-activity-title {
+  @apply h-4 bg-gray-200 rounded w-3/4;
+}
+
+.skeleton-activity-description {
+  @apply h-3 bg-gray-100 rounded w-1/2;
+}
+
+.skeleton-activity-button {
+  @apply h-8 w-16 bg-gray-200 rounded-lg;
+}
+
+/* Animation for staggered loading */
+.skeleton-activity-item:nth-child(1) { animation-delay: 0.1s; }
+.skeleton-activity-item:nth-child(2) { animation-delay: 0.2s; }
+.skeleton-activity-item:nth-child(3) { animation-delay: 0.3s; }
+
+/* Enhanced Data Submission Skeleton Styles */
+.skeleton-avatar-wrapper {
+  @apply relative flex justify-center items-center mb-4;
+}
+
+.skeleton-progress-ring {
+  @apply absolute inset-0;
+  animation: rotateRing 2s linear infinite;
+}
+
+.skeleton-progress-pill {
+  @apply absolute top-0 right-0 h-5 w-12 bg-gray-200 rounded-full;
+  transform: translateX(25%);
+}
+
+.skeleton-profile-info {
+  @apply flex flex-col items-center gap-2 mt-4;
+}
+
+.skeleton-submission-item {
+  @apply transform transition-transform duration-300;
+  animation: slideInRight 0.5s ease-out forwards;
+}
+
+/* Enhanced Recent Activity Skeleton Styles */
+.skeleton-activity-icon-wrapper {
+  @apply relative flex items-center;
+}
+
+.skeleton-activity-status {
+  @apply absolute -top-1 -right-1 w-3 h-3 bg-gray-200 rounded-full;
+}
+
+.skeleton-activity-type {
+  @apply h-4 w-24 bg-gray-200 rounded mb-1;
+}
+
+/* New Animations */
+@keyframes rotateRing {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+  

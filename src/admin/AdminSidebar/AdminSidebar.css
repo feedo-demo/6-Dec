@@ -1,0 +1,59 @@
+/**
+ * AdminSidebar Component Styles
+ * 
+ * Features:
+ * - Fixed positioning
+ * - Smooth hover effects
+ * - Active state styling
+ * - Clean typography
+ */
+
+.admin-sidebar {
+  @apply fixed left-0 top-0 h-screen w-64 bg-white border-r border-gray-200
+         flex flex-col z-10;
+}
+
+.sidebar-header {
+  @apply p-6 border-b border-gray-200;
+}
+
+.sidebar-header h2 {
+  @apply text-xl font-bold text-gray-800;
+}
+
+.sidebar-nav {
+  @apply flex-1 p-4 space-y-2;
+}
+
+.nav-item {
+  @apply flex items-center gap-3 px-4 py-3 rounded-lg
+         text-gray-600 hover:text-blue-600 hover:bg-blue-50
+         transition-all duration-200;
+}
+
+.nav-item.active {
+  @apply bg-blue-50 text-blue-600 font-medium;
+}
+
+.nav-icon {
+  @apply w-5 h-5;
+}
+
+.admin-sidebar {
+  @apply flex flex-col h-full;
+}
+
+.sidebar-content {
+  @apply flex-1;
+}
+
+.sidebar-logout-button {
+  @apply flex items-center gap-2 px-4 py-3 w-full
+         text-red-500 hover:bg-red-50 hover:text-red-600
+         transition-colors duration-300 mt-auto
+         border-t border-gray-200;
+}
+
+.logout-icon {
+  @apply w-5 h-5;
+} 

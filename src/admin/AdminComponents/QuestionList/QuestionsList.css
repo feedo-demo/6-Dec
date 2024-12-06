@@ -1,0 +1,141 @@
+/**
+ * QuestionsList Component Styles
+ * 
+ * Features:
+ * - Question card styling
+ * - Grid layout
+ * - Action button styling
+ * - Hover effects
+ * - Drag and drop indicators
+ * - Badge styling
+ */
+
+.questions-list-container {
+  @apply w-full p-6;
+}
+
+.questions-header {
+  @apply flex justify-between items-center mb-6;
+}
+
+.header-content {
+  @apply flex items-center gap-3;
+}
+
+.header-content h3 {
+  @apply text-xl font-semibold text-gray-800;
+}
+
+.question-count {
+  @apply text-sm text-gray-500 bg-gray-100 
+         px-2 py-1 rounded-full;
+}
+
+.questions-grid {
+  @apply space-y-4 relative;
+}
+
+.questions-grid.is-dragging {
+  @apply cursor-grabbing;
+}
+
+.question-card {
+  @apply bg-white p-4 rounded-lg border border-gray-200
+         hover:border-blue-500 transition-all duration-200
+         flex justify-between items-start gap-4
+         cursor-grab;
+}
+
+.question-card.dragging {
+  @apply opacity-50 border-2 border-blue-500 shadow-lg
+         cursor-grabbing scale-[1.02];
+}
+
+.question-card.drag-over {
+  @apply border-2 border-blue-500 transform scale-[1.02]
+         bg-blue-50;
+}
+
+.question-content {
+  @apply flex items-start gap-4 flex-1;
+}
+
+.question-number {
+  @apply w-8 h-8 flex items-center justify-center
+         bg-blue-100 text-blue-600 rounded-full
+         font-medium text-sm shrink-0;
+}
+
+.drag-handle {
+  @apply cursor-grab text-gray-400 hover:text-gray-600
+         transition-colors duration-200 select-none
+         px-1;
+}
+
+.question-details {
+  @apply flex-1 min-w-0;
+}
+
+.question-header {
+  @apply flex items-center gap-2 mb-1;
+}
+
+.question-type-icon {
+  @apply text-lg;
+}
+
+.question-details h4 {
+  @apply text-gray-800 font-medium truncate;
+}
+
+.question-type {
+  @apply text-sm text-gray-500;
+}
+
+.question-description {
+  @apply text-sm text-gray-600 mt-1;
+}
+
+.question-badges {
+  @apply flex flex-wrap gap-2 mt-2;
+}
+
+.required-badge {
+  @apply inline-flex items-center px-2 py-0.5 rounded text-xs
+         font-medium bg-red-100 text-red-800;
+}
+
+.validation-badge {
+  @apply inline-flex items-center px-2 py-0.5 rounded text-xs
+         font-medium bg-blue-100 text-blue-800;
+}
+
+.question-actions {
+  @apply flex gap-2 shrink-0;
+}
+
+/* Responsive adjustments */
+@media (max-width: 640px) {
+  .question-card {
+    @apply flex-col;
+  }
+
+  .question-actions {
+    @apply flex-row justify-end w-full pt-4 
+           border-t border-gray-100 mt-4;
+  }
+}
+
+/* Animation for drag and drop */
+@keyframes card-lift {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(-4px);
+  }
+}
+
+.question-card:active {
+  animation: card-lift 0.2s ease forwards;
+} 

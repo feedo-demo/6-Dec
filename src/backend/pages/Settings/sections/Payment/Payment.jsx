@@ -13,22 +13,27 @@ import {
   FiPlus, FiTrash2, FiCheck
 } from 'react-icons/fi';
 import './Payment.css';
-import SavedCard from './components/SavedCard/SavedCard';
-import BillingHistory from './components/BillingHistory/BillingHistory';
-import AddCard from './components/AddCard/AddCard';
-import { stripeApi } from '../../../../api/stripe';
-import StripeProvider from '../../../../api/providers/StripeProvider';
-import { useToast } from '../../../../components/Toast/ToastContext';
-import SkeletonLoading from './components/SkeletonLoading/SkeletonLoading';
-import CardSkeleton from './components/SavedCard/CardSkeleton';
+import SavedCard from '../../../../../components/SavedCard/SavedCard';
+import BillingHistory from '../../../../../components/BillingHistory/BillingHistory';
+import AddCard from '../../../../../components/AddCard/AddCard';
+import { stripeApi } from '../../../../../api/stripe';
+import StripeProvider from '../../../../../api/providers/StripeProvider';
+import { useToast } from '../../../../../components/Toast/ToastContext';
+import SkeletonLoading from '../../../../../components/SkeletonLoading/SkeletonLoading';
+import CardSkeleton from '../../../../../components/SavedCard/CardSkeleton';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import AddCardPopup from '../../../../components/Popups/AddCardPopup/AddCardPopup';
+import AddCardPopup from '../../../../../components/Popups/AddCardPopup/AddCardPopup';
 import { useAuth } from '../../../../../auth/AuthContext';
+import { PAYMENT_NOTIFICATIONS } from '../../../../../components/Toast/toastnotifications';
 
 // Move cardImages outside component
 const cardImages = {
   visa: 'https://js.stripe.com/v3/fingerprinted/img/visa-729c05c240c4bdb47b03ac81d9945bfe.svg',
-  mastercard: 'https://js.stripe.com/v3/fingerprinted/img/mastercard-4d8844094130711885b5e41b28c9848f.svg'
+  mastercard: 'https://js.stripe.com/v3/fingerprinted/img/mastercard-4d8844094130711885b5e41b28c9848f.svg',
+  amex: 'https://js.stripe.com/v3/fingerprinted/img/amex-a49b82f46c5cd6a96a6e418a6ca1717c.svg',
+  discover: 'https://js.stripe.com/v3/fingerprinted/img/discover-ac52cd46f89fa40a29a0bfb954e33173.svg',
+  unionpay: 'https://js.stripe.com/v3/fingerprinted/img/unionpay-8a10aefc7295216c338ba4e1224627a1.svg',
+  default: 'https://js.stripe.com/v3/fingerprinted/img/visa-729c05c240c4bdb47b03ac81d9945bfe.svg'
 };
 
 // eslint-disable-next-line no-unused-vars
@@ -38,6 +43,26 @@ const acceptedCardImages = {
   amex: 'https://js.stripe.com/v3/fingerprinted/img/amex-a49b82f46c5cd6a96a6e418a6ca1717c.svg',
   discover: 'https://js.stripe.com/v3/fingerprinted/img/discover-ac52cd46f89fa40a29a0bfb954e33173.svg',
   unionpay: 'https://js.stripe.com/v3/fingerprinted/img/unionpay-8a10aefc7295216c338ba4e1224627a1.svg'
+};
+
+// Add this new component at the top level of the file
+const EmptyPaymentMethods = () => (
+  <div className="empty-payment-methods">
+    <FiCreditCard className="empty-icon" />
+    <p className="empty-text">No payment methods added</p>
+    <p className="empty-subtext">Add a payment method to get started</p>
+  </div>
+);
+
+const getCardImage = (type) => {
+  console.log('Card type:', type);
+  
+  const cardType = type?.toLowerCase() || 'default';
+  
+  console.log('Processed card type:', cardType);
+  console.log('Image URL:', cardImages[cardType] || cardImages.default);
+  
+  return cardImages[cardType] || cardImages.default;
 };
 
 const Payment = () => {
@@ -61,27 +86,50 @@ const Payment = () => {
   }, [searchParams]);
 
   // Format payment method to card format
-  const formatPaymentMethod = (paymentMethod, isFirst = false) => ({
-    id: paymentMethod.id,
-    type: paymentMethod.card.brand,
-    last4: paymentMethod.card.last4,
-    expiry: `${String(paymentMethod.card.exp_month).padStart(2, '0')}/${String(paymentMethod.card.exp_year).slice(-2)}`,
-    isDefault: isFirst, // First card will be default
-    cardHolder: paymentMethod.billing_details.name || 'Card Holder'
-  });
+  const formatPaymentMethod = (paymentMethod, defaultPaymentMethodId) => {
+    return {
+      id: paymentMethod.id,
+      type: paymentMethod.card.brand?.toLowerCase() || 'default',
+      last4: paymentMethod.card.last4,
+      expiry: `${String(paymentMethod.card.exp_month).padStart(2, '0')}/${String(paymentMethod.card.exp_year).slice(-2)}`,
+      isDefault: paymentMethod.id === defaultPaymentMethodId,
+      cardHolder: paymentMethod.billing_details.name || 'Card Holder'
+    };
+  };
 
   // Fetch or create customer
   const getOrCreateCustomer = async () => {
     try {
       if (!user) {
-        throw new Error('No authenticated user found');
+        throw new Error('Please sign in to manage payment methods');
       }
 
-      const customer = await stripeApi.getOrCreateCustomer(user.uid, user.email);
+      // Get user ID from the transformed user object
+      const userId = user.profile?.authUid;
+      if (!userId) {
+        console.error('User object:', user);
+        throw new Error('Authentication error. Please try signing out and back in.');
+      }
+
+      // Get email from user data with fallbacks
+      const userEmail = user.profile?.email || user.email;
+      if (!userEmail) {
+        throw new Error('Please complete your profile setup to add payment methods');
+      }
+
+      const customer = await stripeApi.getOrCreateCustomer(
+        userId, 
+        userEmail
+      );
+      
+      if (!customer || !customer.id) {
+        throw new Error('Failed to create payment profile');
+      }
+
       return customer.id;
     } catch (err) {
       console.error('Error getting/creating customer:', err);
-      throw new Error('Failed to initialize customer');
+      throw err;
     }
   };
 
@@ -90,18 +138,18 @@ const Payment = () => {
     try {
       console.log('Fetching payment methods for customer:', custId);
       const paymentMethods = await stripeApi.listPaymentMethods(custId);
-      console.log('Payment methods received:', paymentMethods);
+      console.log('Raw payment methods:', paymentMethods);
       
-      // Format cards and set first one as default
-      const formattedCards = paymentMethods.map((pm, index) => 
-        formatPaymentMethod(pm, index === 0)
-      );
-
-      // If we have cards, set the first one as default in Stripe
-      if (formattedCards.length > 0) {
-        await stripeApi.setDefaultPaymentMethod(custId, formattedCards[0].id)
-          .catch(err => console.error('Error setting initial default card:', err));
-      }
+      // Get the default payment method from Stripe
+      const customer = await stripeApi.getCustomer(custId);
+      const defaultPaymentMethodId = customer.invoice_settings?.default_payment_method?.id;
+      
+      // Format cards and mark the default one
+      const formattedCards = paymentMethods.map(pm => {
+        const formattedCard = formatPaymentMethod(pm, defaultPaymentMethodId);
+        console.log('Formatted card:', formattedCard);
+        return formattedCard;
+      });
 
       setCards(formattedCards);
     } catch (err) {
@@ -113,23 +161,20 @@ const Payment = () => {
   // Fetch billing history from Stripe
   const fetchBillingHistory = async (custId) => {
     try {
-      // Get invoices from Stripe
-      const invoices = await stripeApi.listInvoices(custId);
-      
-      // Format invoices for our UI
-      const formattedInvoices = invoices.map(invoice => ({
-        id: invoice.id,
-        date: new Date(invoice.created * 1000).toISOString(),
-        number: invoice.number,
-        amount: invoice.amount_paid / 100, // Convert from cents to dollars
-        status: invoice.status === 'paid' ? 'Paid' : invoice.status,
-        invoice_pdf: invoice.invoice_pdf
-      }));
+      setLoading(true);
+      console.log('Fetching billing history for customer:', custId); // Debug log
 
-      setBillingHistory(formattedInvoices);
+      // Get fresh billing history from Stripe
+      const invoices = await stripeApi.getBillingHistory(custId);
+      console.log('Received billing history:', invoices); // Debug log
+      
+      // Update local state with new data
+      setBillingHistory(invoices);
     } catch (error) {
       console.error('Error fetching billing history:', error);
       toast.showError('Failed to load billing history');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -140,10 +185,15 @@ const Payment = () => {
         setLoading(true);
         setError(null);
 
+        // Wait for user data to be available
+        if (!user) {
+          console.log('Waiting for user authentication...');
+          return;
+        }
+
         // Get or create customer first
         const custId = await getOrCreateCustomer();
         setCustomerId(custId);
-        console.log('Customer ID:', custId);
 
         // Then fetch payment methods
         await fetchPaymentMethods(custId);
@@ -153,25 +203,23 @@ const Payment = () => {
       } catch (err) {
         console.error('Error initializing payment data:', err);
         setError(err.message);
+        toast.showError(err.message || 'Failed to initialize payment data');
       } finally {
         setLoading(false);
       }
     };
 
     initializePaymentData();
-  }, []);
+  }, [user]); // Depend on user object
 
   const handleSetDefault = async (cardId) => {
     try {
       await stripeApi.setDefaultPaymentMethod(customerId, cardId);
-      setCards(cards.map(card => ({
-        ...card,
-        isDefault: card.id === cardId
-      })));
-      toast.showSuccess('Default payment method updated');
+      await fetchPaymentMethods(customerId);
+      toast.showToast(PAYMENT_NOTIFICATIONS.CARD.SET_DEFAULT.SUCCESS, 'success');
     } catch (err) {
       console.error('Error setting default card:', err);
-      toast.showError('Failed to set default payment method');
+      toast.showToast(PAYMENT_NOTIFICATIONS.CARD.SET_DEFAULT.ERROR, 'error');
     }
   };
 
@@ -179,10 +227,10 @@ const Payment = () => {
     try {
       await stripeApi.deletePaymentMethod(cardId);
       setCards(cards.filter(card => card.id !== cardId));
-      toast.showSuccess('Card deleted successfully');
+      toast.showToast(PAYMENT_NOTIFICATIONS.CARD.DELETE.SUCCESS, 'success');
     } catch (err) {
       console.error('Error deleting card:', err);
-      toast.showError('Failed to delete card');
+      toast.showToast(PAYMENT_NOTIFICATIONS.CARD.DELETE.ERROR, 'error');
     }
   };
 
@@ -190,10 +238,10 @@ const Payment = () => {
     try {
       await stripeApi.addPaymentMethod(customerId, paymentMethodId);
       await fetchPaymentMethods(customerId);
-      toast.showSuccess('Card added successfully');
+      toast.showToast(PAYMENT_NOTIFICATIONS.CARD.ADD.SUCCESS, 'success');
     } catch (err) {
       console.error('Error adding card:', err);
-      toast.showError('Failed to add card');
+      toast.showToast(err.message || PAYMENT_NOTIFICATIONS.CARD.ADD.ERROR, 'error');
       throw err;
     }
   };
@@ -202,11 +250,47 @@ const Payment = () => {
     navigate('/subscription');
   };
 
+  // Update the handleClearHistory function
+  const handleClearHistory = async () => {
+    try {
+      if (!user) return;
+      
+      // Show confirmation dialog
+      if (window.confirm('Are you sure you want to clear your billing history? This cannot be undone.')) {
+        setLoading(true); // Add loading state while clearing
+        
+        // Clear billing history in Stripe
+        await stripeApi.clearBillingHistory(customerId);
+        
+        // Refresh billing history from Stripe
+        await fetchBillingHistory(customerId);
+        
+        // Show success message
+        toast.showSuccess('Billing history cleared successfully');
+      }
+    } catch (error) {
+      console.error('Error clearing billing history:', error);
+      toast.showError('Failed to clear billing history');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   if (error) {
     return (
       <div className="p-4 bg-red-50 text-red-600 rounded-lg">
         <h3 className="font-semibold">Error</h3>
         <p>{error}</p>
+      </div>
+    );
+  }
+
+  if (loading) {
+    return (
+      <div className="payment-section">
+        <div className="loading-state">
+          <div className="loading-spinner"></div>
+        </div>
       </div>
     );
   }
@@ -237,14 +321,20 @@ const Payment = () => {
       <StripeProvider>
         {/* Payment Methods */}
         <div className="payment-methods">
-          <div className="cards-list">
-            {loading ? (
-              <>
-                <CardSkeleton />
-                <CardSkeleton />
-              </>
-            ) : (
-              cards.map((card) => (
+          <div className="subsection-header">
+            <h3 className="subsection-title">Payment Methods</h3>
+          </div>
+          
+          {loading ? (
+            <div className="cards-list">
+              <CardSkeleton />
+              <CardSkeleton />
+            </div>
+          ) : cards.length === 0 ? (
+            <EmptyPaymentMethods />
+          ) : (
+            <div className="cards-list">
+              {cards.map((card) => (
                 <SavedCard
                   key={card.id}
                   card={card}
@@ -252,13 +342,17 @@ const Payment = () => {
                   onDelete={handleDeleteCard}
                   cardImages={cardImages}
                 />
-              ))
-            )}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Billing History */}
-        <BillingHistory invoices={billingHistory} />
+        <BillingHistory 
+          invoices={billingHistory} 
+          onClearHistory={handleClearHistory}
+          loading={loading}
+        />
 
         {/* Add Card Popup */}
         <AddCardPopup 

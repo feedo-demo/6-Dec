@@ -1,0 +1,64 @@
+/**
+ * AdminButton Component Styles
+ * 
+ * Features:
+ * - Gradient background for primary variant
+ * - Smooth hover and active states
+ * - Loading state styling
+ * - Multiple variants
+ */
+
+.admin-button {
+  @apply px-6 py-2 rounded-full
+         relative overflow-hidden
+         min-w-[140px] h-[40px]
+         transition-all duration-300 transform
+         disabled:cursor-not-allowed disabled:opacity-80
+         whitespace-nowrap;
+}
+
+.button-content {
+  @apply flex items-center justify-center gap-2 h-full whitespace-nowrap;
+}
+
+/* Primary Variant */
+.admin-button-primary {
+  @apply text-white;
+  background: linear-gradient(135deg, #0093E9 0%, #80D0C7 100%);
+}
+
+.admin-button-primary:hover:not(:disabled) {
+  @apply shadow-lg -translate-y-0.5;
+}
+
+.admin-button-primary:active:not(:disabled) {
+  @apply translate-y-0;
+}
+
+/* Outline Variant */
+.admin-button-outline {
+  @apply border border-gray-300 text-gray-700
+         hover:bg-gray-50 active:bg-gray-100;
+}
+
+/* Danger Variant */
+.admin-button-danger {
+  @apply text-white bg-red-500
+         hover:bg-red-600 active:bg-red-700;
+}
+
+/* Loading State */
+.admin-button.loading {
+  @apply cursor-not-allowed;
+}
+
+.admin-button.loading span {
+  @apply opacity-0;
+}
+
+/* Responsive Design */
+@media (max-width: 640px) {
+  .admin-button {
+    @apply px-4 text-sm;
+  }
+} 

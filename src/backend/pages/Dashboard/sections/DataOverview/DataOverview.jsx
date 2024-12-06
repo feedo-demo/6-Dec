@@ -28,60 +28,13 @@ import './DataOverview.css';
 import { useAuth } from '../../../../../auth/AuthContext';
 import { applicationOperations, opportunityOperations } from '../../../../../applications/applicationManager';
 import { useNavigate } from 'react-router-dom';
+import { db } from '../../../../../firebase/config';
+import { doc, getDoc } from 'firebase/firestore';
 
 const DataOverview = () => {
   const navigate = useNavigate();
-
-  // Helper function to format date
-  const formatDate = (date) => {
-    if (!date) return 'Never';
-    const d = new Date(date);
-    if (isNaN(d.getTime())) return 'Never';
-    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-  };
-
-  // Helper function to calculate profile completion stats
-  const calculateProfileStats = (user) => {
-    let completedSections = 0;
-    const totalSections = 4; // Personal, Education, Work Experience, Verification
-
-    // Check Personal Data completion
-    if (user?.profile?.firstName && 
-        user?.profile?.lastName && 
-        user?.profile?.email && 
-        user?.profile?.phoneNumber && 
-        user?.profile?.location && 
-        user?.profile?.professionalSummary) {
-      completedSections++;
-    }
-
-    // Check Education completion
-    if (user?.education?.degreeLevel && 
-        user?.education?.fieldOfStudy && 
-        user?.education?.institutionName && 
-        user?.education?.graduationDate) {
-      completedSections++;
-    }
-
-    // Check Work Experience completion
-    if (user?.workExperience?.length > 0) {
-      completedSections++;
-    }
-
-    // Check Verification completion
-    if (user?.verification?.isVerified) {
-      completedSections++;
-    }
-
-    return {
-      completionRate: Math.round((completedSections / totalSections) * 100),
-      completedSections,
-      totalSections,
-      verificationStatus: user?.verification?.isVerified || false
-    };
-  };
-
   const { user } = useAuth();
+  const [sections, setSections] = useState([]);
   const [stats, setStats] = useState({
     applications: {
       total: 0,
@@ -107,6 +60,203 @@ const DataOverview = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  // Helper function to format date
+  const formatDate = (date) => {
+    if (!date) return 'Never';
+    const d = new Date(date);
+    if (isNaN(d.getTime())) return 'Never';
+    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  };
+
+  // Add helper functions for section completion check
+  const checkSectionCompletion = (sectionId, sectionData, section) => {
+    console.log(`Checking completion for section ${sectionId}:`, {
+      hasSectionData: !!sectionData,
+      hasQuestions: !!section?.questions,
+      sectionData,
+      questions: section?.questions
+    });
+
+    // For new users or missing section data, return false
+    if (!sectionData || !section?.questions) {
+      console.log(`Section ${sectionId}: Returning false - missing data or questions`);
+      return false;
+    }
+
+    // Skip empty sections
+    const allQuestions = section.questions;
+    if (allQuestions.length === 0) {
+      console.log(`Section ${sectionId}: Returning false - no questions`);
+      return false;
+    }
+
+    // For new users (no profileData), return false
+    if (!Object.keys(sectionData).length) {
+      console.log(`Section ${sectionId}: Returning false - empty section data`);
+      return false;
+    }
+
+    const completion = allQuestions.every(question => {
+      const value = sectionData[question.id];
+      console.log(`Checking question ${question.id}:`, {
+        value,
+        type: question.type,
+        required: question.required
+      });
+      
+      if (!question.required && (value === undefined || value === null)) return true;
+
+      switch (question.type) {
+        case 'repeater':
+          if (!Array.isArray(value) || value.length === 0) return !question.required;
+          
+          return value.every(group => {
+            const requiredFields = question.repeaterFields?.filter(f => f.required) || [];
+            return requiredFields.every(field => {
+              const fieldValue = group[field.id];
+              return validateFieldValue(fieldValue, field.type);
+            });
+          });
+
+        case 'multipleChoice':
+          return Array.isArray(value) && value.length > 0;
+
+        case 'file':
+          return value && value.url;
+
+        case 'dropdown':
+        case 'singleChoice':
+          return value && String(value).trim() !== '';
+
+        default:
+          return value && String(value).trim() !== '';
+      }
+    });
+
+    console.log(`Section ${sectionId} final completion:`, completion);
+    return completion;
+  };
+
+  const validateFieldValue = (value, type) => {
+    if (value === undefined || value === null) return false;
+    
+    switch (type) {
+      case 'multipleChoice':
+        return Array.isArray(value) && value.length > 0;
+      case 'file':
+        return value && value.url;
+      case 'dropdown':
+      case 'singleChoice':
+        return value && String(value).trim() !== '';
+      default:
+        return value && String(value).trim() !== '';
+    }
+  };
+
+  // Helper function to calculate profile completion stats
+  const calculateProfileStats = (user) => {
+    console.log('Calculating profile stats for user:', {
+      hasProfile: !!user?.profile,
+      hasProfileData: !!user?.profileData,
+      sectionsLength: sections.length,
+      userProfileData: user?.profileData
+    });
+
+    // Return 0% for new users or missing data
+    if (!sections.length || !user?.profile) {
+      console.log('Returning 0% - Missing required data');
+      return {
+        completionRate: 0,
+        completedSections: 0,
+        totalSections: sections.length || 0,
+        verificationStatus: false
+      };
+    }
+
+    // Initialize profileData if it doesn't exist
+    if (!user.profileData) {
+      console.log('Returning 0% - No profile data');
+      return {
+        completionRate: 0,
+        completedSections: 0,
+        totalSections: sections.length,
+        verificationStatus: false
+      };
+    }
+
+    let completedSections = 0;
+    const totalSections = sections.length;
+
+    sections.forEach(section => {
+      // Skip if section doesn't exist in profileData
+      if (!user.profileData[section.id]) {
+        console.log(`Section ${section.id} not found in profileData`);
+        return;
+      }
+
+      const sectionData = user.profileData[section.id];
+      console.log(`Checking section ${section.id}:`, {
+        sectionData,
+        questions: section.questions
+      });
+
+      // Check if section has any data
+      if (!sectionData || Object.keys(sectionData).length === 0) {
+        console.log(`Section ${section.id} is empty`);
+        return;
+      }
+
+      const isComplete = checkSectionCompletion(
+        section.id, 
+        sectionData, 
+        section
+      );
+      console.log(`Section ${section.id} completion:`, isComplete);
+      
+      if (isComplete) completedSections++;
+    });
+
+    const stats = {
+      completionRate: Math.round((completedSections / totalSections) * 100),
+      completedSections,
+      totalSections,
+      verificationStatus: user?.verification?.isVerified || false
+    };
+
+    console.log('Final profile stats:', stats);
+    return stats;
+  };
+
+  // Add useEffect to fetch section configuration
+  useEffect(() => {
+    const fetchSectionConfig = async () => {
+      try {
+        if (!user?.profile?.userType) return;
+
+        const profilesDocRef = doc(db, 'admin', 'profiles');
+        const profilesDoc = await getDoc(profilesDocRef);
+        
+        if (!profilesDoc.exists()) return;
+
+        const data = profilesDoc.data();
+        const userProfileType = data.profileTypes[user.profile.userType];
+        
+        if (!userProfileType?.sections) return;
+
+        const sectionsArray = Object.entries(userProfileType.sections || {}).map(([id, section]) => ({
+          id,
+          ...section
+        }));
+
+        setSections(sectionsArray);
+      } catch (error) {
+        console.error('Error fetching section config:', error);
+      }
+    };
+
+    fetchSectionConfig();
+  }, [user?.profile?.userType]);
+
   // Fetch real statistics
   useEffect(() => {
     const fetchStats = async () => {
@@ -123,7 +273,7 @@ const DataOverview = () => {
 
         console.log('Fetched opportunity stats:', opportunitiesStats); // Debug log
 
-        // Calculate profile completion stats
+        // Calculate profile completion stats using the new method
         const profileStats = calculateProfileStats(user);
 
         setStats({
@@ -154,7 +304,7 @@ const DataOverview = () => {
     };
 
     fetchStats();
-  }, [user]);
+  }, [user, sections]); // Add sections to dependencies
 
   // Helper function to format verification status
   const formatVerificationStatus = (isVerified) => {
