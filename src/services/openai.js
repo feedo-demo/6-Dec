@@ -4,7 +4,7 @@ import { tokenUsageService } from './tokenUsage';
 let openai = null;
 
 try {
-  const API_KEY = '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';
+  const API_KEY = 'api-key-will-go-here';
   
   if (API_KEY) {
     console.log('Initializing OpenAI with API key:', API_KEY.substring(0, 10) + '...');
